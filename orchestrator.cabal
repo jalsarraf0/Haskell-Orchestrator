@@ -88,13 +88,18 @@ test-suite orchestrator-test
     Test.Demo
     Test.Config
     Test.Golden
+    Test.EdgeCases
+    Test.Properties
+    Test.Integration
   build-depends:
     , base            >=4.18  && <4.20
     , bytestring      >=0.11  && <0.13
     , containers       >=0.6  && <0.8
     , filepath         >=1.4  && <1.6
     , orchestrator
+    , QuickCheck       >=2.14  && <2.16
     , tasty            >=1.4   && <1.6
     , tasty-hunit      >=0.10  && <0.11
+    , tasty-quickcheck >=0.10  && <0.12
     , text             >=2.0  && <2.2
     , yaml             >=0.11 && <0.12

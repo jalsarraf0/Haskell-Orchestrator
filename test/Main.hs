@@ -9,6 +9,9 @@ import Test.Diff qualified
 import Test.Demo qualified
 import Test.Config qualified
 import Test.Golden qualified
+import Test.EdgeCases qualified
+import Test.Properties qualified
+import Test.Integration qualified
 
 main :: IO ()
 main = defaultMain $ testGroup "Orchestrator"
@@ -20,4 +23,7 @@ main = defaultMain $ testGroup "Orchestrator"
   , Test.Demo.tests
   , Test.Config.tests
   , Test.Golden.tests
+  , Test.EdgeCases.tests
+  , Test.Properties.tests
+  , Test.Integration.tests
   ]
