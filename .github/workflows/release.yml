@@ -33,12 +33,7 @@ jobs:
             arch: arm64
             ext: ''
             archive: tar.gz
-          - runner: macos-13
-            os-name: macos
-            arch: x86_64
-            ext: ''
-            archive: tar.gz
-          - runner: macos-latest
+          - runner: macos-15
             os-name: macos
             arch: arm64
             ext: ''
@@ -202,8 +197,7 @@ jobs:
             |----------|-------------|------|
             | Linux | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64.tar.gz` |
             | Linux | arm64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-arm64.tar.gz` |
-            | macOS | Intel | `haskell-orchestrator-${{ steps.prep.outputs.version }}-macos-x86_64.tar.gz` |
-            | macOS | Apple Silicon | `haskell-orchestrator-${{ steps.prep.outputs.version }}-macos-arm64.tar.gz` |
+            | macOS | Apple Silicon (arm64) | `haskell-orchestrator-${{ steps.prep.outputs.version }}-macos-arm64.tar.gz` |
             | Windows | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-windows-x86_64.zip` |
 
             ### Verification
