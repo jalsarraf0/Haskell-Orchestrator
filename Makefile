@@ -1,4 +1,4 @@
-.PHONY: build test clean demo doctor install format lint check verify tier-check contract-check
+.PHONY: build test clean demo doctor install format lint check verify tier-check contract-check verify-standalone
 
 build:
 	cabal build all
@@ -40,3 +40,6 @@ verify:
 
 contract-check:
 	@./scripts/check-capability-contract.sh
+
+verify-standalone:
+	@./scripts/verify-standalone-install.sh

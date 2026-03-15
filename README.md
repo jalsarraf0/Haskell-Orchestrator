@@ -77,7 +77,29 @@ See `docs/edition-comparison.md` for the full comparison.
 - Replacing GitHub's built-in security features
 - Providing a web dashboard
 
-## Quick Start
+## Standalone Installation
+
+Community is independently installable. No other edition needs to be
+installed. The released binary is self-contained.
+
+### Install from Release Binary (Recommended)
+
+Download the pre-built binary for your platform from the
+[Releases](https://github.com/jalsarraf0/Haskell-Orchestrator/releases)
+page.
+
+```bash
+# Linux x86_64
+tar xzf haskell-orchestrator-X.Y.Z-linux-x86_64.tar.gz
+cd haskell-orchestrator-X.Y.Z-linux-x86_64
+sudo cp orchestrator /usr/local/bin/
+
+# Verify
+orchestrator demo
+```
+
+Each release includes SHA-256 checksums, a CycloneDX SBOM, and build
+provenance attestation. See "Release Integrity / Verification" below.
 
 ### Install from Source
 
@@ -89,6 +111,39 @@ cabal update
 cabal build
 cabal install exe:orchestrator
 ```
+
+### Verify Installation
+
+```bash
+# Quick check
+orchestrator demo
+
+# Full standalone verification
+bash scripts/verify-standalone-install.sh
+```
+
+## What Ships with This Edition
+
+The Community binary includes:
+
+- GitHub Actions YAML parsing into typed domain model
+- Single-repository workflow scanning
+- 10 standard policy rules (permissions, security, runners, naming, triggers)
+- Structural validation (empty jobs, dangling needs, duplicate IDs)
+- Diff view and remediation plan generation
+- Demo mode with synthetic fixtures (no external access)
+- Doctor (environment diagnostics)
+- Configuration init and verify
+- JSON and text output formats
+- Resource-bounded parallelism
+
+### What This Does / Does Not Depend On
+
+- **No runtime dependency on any other edition.** The binary is self-contained.
+- No Business or Enterprise installation is required.
+- No shared runtime files or config directories with other editions.
+
+## Quick Start
 
 ### Try the Demo
 
@@ -319,6 +374,20 @@ A: Yes, with a GitHub token that has appropriate access.
 
 **Q: Is this tool safe to run in CI?**
 A: Yes. It is read-only and has no side effects.
+
+## Coexistence with Other Editions
+
+Community, Business, and Enterprise can all be installed on the same machine.
+They use distinct binary names and do not share runtime state:
+
+| Edition | Binary | Default Config |
+|---|---|---|
+| Community | `orchestrator` | `.orchestrator.yml` |
+| Business | `orchestrator-business` | `.orchestrator.yml` |
+| Enterprise | `orchestrator-enterprise` | `.orchestrator.yml` |
+
+Each binary reads `.orchestrator.yml` independently. They do not interfere
+with each other.
 
 ## Development
 

@@ -6,6 +6,9 @@ Author: Jamal Al-Sarraf
 
 ## Feature Matrix
 
+Each edition is independently installable. No edition requires another to be
+installed first.
+
 | Feature | Community | Business | Enterprise |
 |---|:---:|:---:|:---:|
 | **Scanning and Analysis** | | | |
@@ -30,25 +33,25 @@ Author: Jamal Al-Sarraf
 | NAME-001: Workflow Naming | x | x | x |
 | NAME-002: Job Naming Convention | x | x | x |
 | TRIG-001: Wildcard Triggers | x | x | x |
-| Team naming convention rules | | x | x |
-| Branch protection pattern checks | | x | x |
-| Required reviewer gate detection | | x | x |
-| Dependency update automation detection | | x | x |
+| Team naming convention rules | | x | |
+| Branch protection pattern checks | | x | |
+| Required reviewer gate detection | | x | |
+| Dependency update automation detection | | x | |
 | **Output Formats** | | | |
 | Plain text output | x | x | x |
 | JSON output | x | x | x |
-| HTML report generation | | x | x |
-| CSV export | | x | x |
-| Summary statistics | | x | x |
+| HTML report generation | | x | |
+| CSV export | | x | |
+| Summary statistics | | x | |
 | **Multi-Repository** | | | |
-| Multi-repo batch scanning | | x | x |
-| Bounded parallelism (1-32 workers) | | x | x |
-| Batch stop-on-error control | | x | x |
+| Multi-repo batch scanning | | x | |
+| Bounded parallelism (1-32 workers) | | x | |
+| Batch stop-on-error control | | x | |
 | **Remediation** | | | |
 | Basic remediation plan | x | x | x |
-| Prioritized remediation with effort estimates | | x | x |
-| Quick-fix vs. comprehensive strategies | | x | x |
-| Plan merging and deduplication | | x | x |
+| Prioritized remediation with effort estimates | | x | |
+| Quick-fix vs. comprehensive strategies | | x | |
+| Plan merging and deduplication | | x | |
 | **Governance** | | | |
 | Organisation-wide governance policies (5 policies) | | | x |
 | Typed enforcement levels (Advisory/Mandatory/Blocking) | | | x |
@@ -67,6 +70,8 @@ Author: Jamal Al-Sarraf
 | Administrative workflows (enforce, scan, export) | | | x |
 | Full organisation scan | | | x |
 | Compliance artifact export | | | x |
+| **Installation** | | | |
+| Standalone binary (no other editions required) | Yes | Yes | Yes |
 | **Licensing** | | | |
 | License | MIT (free) | Private license | Private license |
 | Source availability | Public | Private | Private |
@@ -141,10 +146,18 @@ first-class requirements, not afterthoughts.
 - Administrative workflows (org-wide enforce, org-wide scan, compliance export)
 - Dry-run mode for governance operations
 
-### Enterprise Edition
+### Enterprise Edition Does Not Include
 
-Enterprise includes all features from all tiers. There are no features withheld
-from this edition.
+Enterprise does not include Business-tier features:
+
+- Multi-repository batch scanning
+- HTML or CSV report generation
+- Team-specific policy rules (naming, branch protection, reviewer gates, dependency updates)
+- Prioritized remediation with effort estimates
+- Quick-fix vs. comprehensive remediation strategies
+
+Enterprise and Business are independent products. If you need both governance
+and batch reporting, install both binaries.
 
 ---
 
@@ -182,39 +195,32 @@ Additional decision factors:
 
 ---
 
-## Upgrade Path
+## Installation Model
 
-### Community to Business
+Each edition is a standalone product with its own binary. No edition requires
+another to be installed first.
 
-1. Obtain a Business license.
-2. Clone the Business repository alongside the existing Community checkout.
-3. The Business binary (`orchestrator-business`) is a separate executable that
-   depends on the Community library. Your existing `.orchestrator.yml`
-   configuration is fully compatible.
-4. Existing scan targets, exclusion rules, and disabled rule lists carry
-   forward without changes.
-5. New Business-tier policy rules are automatically included in the full
-   policy pack. You can selectively disable them in configuration if needed.
-6. Begin using `batch`, `report`, `stats`, and `plan --quick` commands.
+### Adding Business
 
-### Business to Enterprise
+1. Download the Business binary from the releases page or build from source.
+2. Your existing `.orchestrator.yml` configuration is fully compatible.
+3. Begin using Business-specific commands: `batch`, `report`, `stats`,
+   `plan --quick`.
+4. The Community binary can remain installed alongside Business.
 
-1. Obtain an Enterprise license.
-2. Clone the Enterprise repository alongside the existing Community checkout.
-3. The Enterprise binary (`orchestrator-enterprise`) extends the Community
-   library with governance, audit, and compliance modules.
-4. Existing configuration carries forward. Enterprise adds `--org` scoping and
-   governance-specific configuration.
-5. Define your organisation's governance policies using the typed policy
-   system (enforcement levels, scoping rules).
-6. Begin using `governance`, `audit`, `compliance`, and `admin` commands.
+### Adding Enterprise
 
-### Downgrade
+1. Download the Enterprise binary from the releases page or build from source.
+2. Enterprise adds `--org` scoping and governance-specific commands.
+3. Begin using `governance`, `audit`, `compliance`, and `admin` commands.
+4. Community and/or Business binaries can remain installed alongside Enterprise.
 
-Downgrading is straightforward because each edition is a separate binary.
-Simply stop using the higher-tier binary and continue with the lower-tier
-one. No data migration is needed since the tool does not persist state across
-sessions (Enterprise audit logs are in-memory and exported on demand).
+### Switching Between Editions
+
+Switching is straightforward because each edition is a separate binary.
+Simply stop using one binary and start using another. No data migration
+is needed since the tool does not persist state across sessions (Enterprise
+audit logs are in-memory and exported on demand).
 
 ---
 

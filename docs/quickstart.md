@@ -4,7 +4,21 @@ Author: Jamal Al-Sarraf
 
 ---
 
-## Prerequisites
+## Choose Your Installation Method
+
+**Option A: Download a pre-built binary** (recommended for most users).
+Download from the [Releases](https://github.com/jalsarraf0/Haskell-Orchestrator/releases)
+page. No Haskell toolchain needed. Skip to Step 2 after downloading.
+
+**Option B: Build from source** (for developers or contributors).
+Follow the steps below starting from Step 1.
+
+No other edition (Business or Enterprise) is required. Community is
+independently installable and self-contained.
+
+---
+
+## Prerequisites (Source Build Only)
 
 - **GHC 9.6.x** (9.6.7 recommended)
 - **Cabal 3.10+** (3.14 recommended)

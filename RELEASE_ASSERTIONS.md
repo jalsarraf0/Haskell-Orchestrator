@@ -74,8 +74,16 @@ gh attestation verify orchestrator-X.Y.Z-linux-x86_64 \
   --owner jalsarraf0
 ```
 
+## Standalone Installability
+
+Each release archive is a standalone product:
+
+- The binary runs without any other edition installed.
+- Release archives include the binary, README, LICENSE, and CHANGELOG.
+- `scripts/verify-standalone-install.sh` validates standalone operation.
+- CI includes a standalone verification workflow.
+
 ## Future Work
 
 - GPG or Sigstore signing of release artifacts
 - Fully reproducible builds via Nix or Docker
-- Additional platform builds (macOS, Windows)
