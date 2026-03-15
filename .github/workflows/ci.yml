@@ -84,3 +84,38 @@ jobs:
             exit 1
           fi
           echo "Attribution check passed"
+
+  capability-contract:
+    name: Capability Contract Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify tier boundaries
+        run: |
+          # Check Community does not contain Business/Enterprise modules
+          FAIL=0
+          for mod in Batch Report Governance Audit Compliance Admin; do
+            if [ -f "src/Orchestrator/$mod.hs" ]; then
+              echo "FAIL: Community contains $mod.hs (premium module)"
+              FAIL=1
+            fi
+          done
+          # Check no premium module imports
+          if grep -rI --include='*.hs' 'OrchestratorBusiness\|OrchestratorEnterprise' src/ app/ 2>/dev/null; then
+            echo "FAIL: Community imports premium modules"
+            FAIL=1
+          fi
+          # Check capability contract manifest exists
+          if [ ! -f config/capability-contract.yaml ]; then
+            echo "FAIL: Missing capability-contract.yaml"
+            FAIL=1
+          fi
+          if [ ! -f docs/capability-matrix.md ]; then
+            echo "FAIL: Missing docs/capability-matrix.md"
+            FAIL=1
+          fi
+          [ $FAIL -eq 0 ] && echo "Capability contract check passed"
+          exit $FAIL
