@@ -1,4 +1,4 @@
-.PHONY: build test clean demo doctor install format lint check
+.PHONY: build test clean demo doctor install format lint check verify tier-check
 
 build:
 	cabal build all
@@ -31,3 +31,9 @@ release-gate:
 	@echo "Running release gate checks..."
 	@./scripts/release-gate.sh
 	@echo "Release gate: PASSED"
+
+tier-check:
+	@./scripts/check-tier-boundaries.sh
+
+verify:
+	@./scripts/verify-release.sh

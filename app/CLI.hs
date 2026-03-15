@@ -20,23 +20,26 @@ data Options = Options
 
 -- | CLI subcommands.
 data Command
-  = CmdScan ![FilePath]
-  | CmdValidate ![FilePath]
-  | CmdDiff ![FilePath]
-  | CmdPlan ![FilePath]
+  = CmdScan !FilePath
+  | CmdValidate !FilePath
+  | CmdDiff !FilePath
+  | CmdPlan !FilePath
   | CmdDemo
   | CmdDoctor
   | CmdInit
   | CmdExplain !Text
   | CmdVerify
+  | CmdRules
   deriving stock (Show)
 
 parseOptions :: ParserInfo Options
 parseOptions = info (optionsParser <**> helper)
   ( fullDesc
-    <> header "orchestrator — GitHub Actions workflow standardization tool"
-    <> progDesc "Scan, validate, and standardize GitHub Actions workflows. \
-                \Run 'orchestrator demo' for a quick tour."
+    <> header "orchestrator — GitHub Actions workflow standardization and governance"
+    <> progDesc "Discover workflow sprawl, detect drift, validate against policies, \
+                \and generate remediation plans. Run 'orchestrator demo' for a quick tour."
+    <> footer "Community Edition. For multi-repo batch scanning, see Business edition. \
+              \For org-wide governance, see Enterprise edition."
   )
 
 optionsParser :: Parser Options
@@ -67,33 +70,36 @@ optionsParser = Options
 commandParser :: Parser Command
 commandParser = subparser
   ( command "scan"
-      (info (CmdScan <$> pathsArg)
-        (progDesc "Scan workflows in the given paths"))
+      (info (CmdScan <$> pathArg)
+        (progDesc "Scan workflows and evaluate policies"))
   <> command "validate"
-      (info (CmdValidate <$> pathsArg)
+      (info (CmdValidate <$> pathArg)
         (progDesc "Validate workflow structure"))
   <> command "diff"
-      (info (CmdDiff <$> pathsArg)
-        (progDesc "Show current issues as a diff"))
+      (info (CmdDiff <$> pathArg)
+        (progDesc "Show current issues"))
   <> command "plan"
-      (info (CmdPlan <$> pathsArg)
+      (info (CmdPlan <$> pathArg)
         (progDesc "Generate a remediation plan"))
   <> command "demo"
       (info (pure CmdDemo)
-        (progDesc "Run demo with synthetic fixtures"))
+        (progDesc "Run demo with synthetic fixtures (no external access)"))
   <> command "doctor"
       (info (pure CmdDoctor)
-        (progDesc "Check environment and configuration"))
+        (progDesc "Diagnose environment, config, and connectivity"))
   <> command "init"
       (info (pure CmdInit)
-        (progDesc "Initialize a new configuration file"))
+        (progDesc "Create a new .orchestrator.yml config file"))
   <> command "explain"
       (info (CmdExplain . T.pack <$> strArgument (metavar "RULE_ID" <> help "Rule ID to explain"))
-        (progDesc "Explain a policy rule"))
+        (progDesc "Explain a policy rule in detail"))
+  <> command "rules"
+      (info (pure CmdRules)
+        (progDesc "List all available policy rules"))
   <> command "verify"
       (info (pure CmdVerify)
         (progDesc "Verify the current configuration"))
   )
 
-pathsArg :: Parser [FilePath]
-pathsArg = some (strArgument (metavar "PATH..." <> help "Paths to scan"))
+pathArg :: Parser FilePath
+pathArg = strArgument (metavar "PATH" <> help "Repository path to scan")

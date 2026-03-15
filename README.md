@@ -1,21 +1,32 @@
 # Haskell Orchestrator
 
-A GitHub Actions workflow standardization, validation, and governance tool
-built in Haskell.
+**Workflow standardization, drift detection, and remediation planning for
+GitHub Actions.**
 
-Haskell Orchestrator scans GitHub Actions workflows, parses them into a typed
-domain model, validates correctness and policy compliance, detects common
-issues, and generates deterministic remediation plans.
+Stop treating CI/CD workflows as one-off configs that nobody reviews.
+Haskell Orchestrator discovers workflow sprawl, detects drift from your
+standards, validates against configurable policies, and generates clean
+remediation plans — all without modifying a single file.
+
+This is **not** a YAML linter. It is a typed analysis engine that understands
+the semantics of GitHub Actions workflows: permissions scopes, runner
+selection, action pinning, concurrency, trigger patterns, and more.
 
 ## Problem Statement
 
-As organizations grow, GitHub Actions workflows drift: permissions become
-overly broad, actions go unpinned, timeouts disappear, naming conventions
-break down, and security hygiene degrades.  Catching these issues manually
-across dozens or hundreds of repositories is impractical.
+As organizations grow, GitHub Actions workflows drift:
+- Permissions become overly broad (`write-all` everywhere)
+- Third-party actions go unpinned (supply-chain risk)
+- Timeouts disappear (runaway builds burn resources)
+- Naming conventions break down
+- Security hygiene degrades silently
 
-Haskell Orchestrator automates this by providing a typed, policy-driven
-analysis engine that produces clear, actionable findings.
+Manual review across dozens of repos is impractical.  Linters catch syntax
+errors but miss semantic issues.  GitHub's built-in tools focus on
+vulnerability scanning, not workflow governance.
+
+Haskell Orchestrator fills this gap with a typed, policy-driven analysis
+engine that produces clear, actionable, deterministic findings.
 
 ## Design Goals
 
@@ -26,6 +37,33 @@ analysis engine that produces clear, actionable findings.
 - **Policy-driven** — configurable rules with severity levels
 - **Operator-friendly** — clear CLI, excellent help text, useful errors
 - **Resource-bounded** — conservative defaults, tunable parallelism
+
+## Editions
+
+This is the **Community Edition** — free and open source.
+
+| Feature | Community | Business | Enterprise |
+|---------|:---------:|:--------:|:----------:|
+| Single-repo scanning | Yes | Yes | Yes |
+| 10 standard policy rules | Yes | Yes | Yes |
+| Structural validation | Yes | Yes | Yes |
+| Diff / remediation plans | Yes | Yes | Yes |
+| JSON + text output | Yes | Yes | Yes |
+| Demo mode | Yes | Yes | Yes |
+| Multi-repo batch scanning | — | Yes | Yes |
+| HTML / CSV reports | — | Yes | Yes |
+| Team policy rules (+4) | — | Yes | Yes |
+| Prioritized remediation | — | Yes | Yes |
+| Org-wide governance | — | — | Yes |
+| Audit trail | — | — | Yes |
+| Compliance mapping | — | — | Yes |
+| Admin workflows | — | — | Yes |
+
+**When to upgrade:**
+- Need multi-repo batch scanning or HTML/CSV reports? → Business
+- Need org-wide governance, audit trails, or compliance? → Enterprise
+
+See `docs/edition-comparison.md` for the full comparison.
 
 ## Non-Goals
 
@@ -74,14 +112,15 @@ orchestrator init
 
 | Command | Description |
 |---------|-------------|
-| `scan PATH...` | Scan workflows in the given paths |
-| `validate PATH...` | Validate workflow structure |
-| `diff PATH...` | Show current issues |
-| `plan PATH...` | Generate a remediation plan |
-| `demo` | Run demo with synthetic fixtures |
-| `doctor` | Check environment and configuration |
-| `init` | Create a new configuration file |
-| `explain RULE_ID` | Explain a specific policy rule |
+| `scan PATH` | Scan workflows and evaluate policies |
+| `validate PATH` | Validate workflow structure |
+| `diff PATH` | Show current issues |
+| `plan PATH` | Generate a remediation plan |
+| `demo` | Run demo with synthetic fixtures (no external access) |
+| `doctor` | Diagnose environment, config, and connectivity |
+| `init` | Create a new .orchestrator.yml config file |
+| `rules` | List all available policy rules |
+| `explain RULE_ID` | Explain a policy rule in detail |
 | `verify` | Verify current configuration |
 
 ### Global Flags
