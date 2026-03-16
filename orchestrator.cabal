@@ -45,6 +45,7 @@ library
     Orchestrator.Demo
     Orchestrator.Scan
     Orchestrator.GitHub
+    Orchestrator.Fix
     Orchestrator.Types
   build-depends:
     , aeson           >=2.1   && <2.3
