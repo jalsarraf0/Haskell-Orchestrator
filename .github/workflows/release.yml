@@ -196,6 +196,9 @@ jobs:
         run: |
           echo "$HOME/.ghcup/bin" >> "$GITHUB_PATH"
           echo "$HOME/.cabal/bin" >> "$GITHUB_PATH"
+          echo "/usr/local/bin" >> "$GITHUB_PATH"
+          echo "/usr/bin" >> "$GITHUB_PATH"
+          echo "/bin" >> "$GITHUB_PATH"
 
       - name: Generate SBOM
         run: |
