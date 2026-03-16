@@ -33,6 +33,11 @@ jobs:
             arch: arm64
             ext: ''
             archive: tar.gz
+          - runner: [self-hosted, windows, x64, haskell]
+            os-name: windows
+            arch: x86_64
+            ext: '.exe'
+            archive: zip
 
     steps:
       - name: Checkout
