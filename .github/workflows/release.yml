@@ -23,14 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-latest
+          - runner: [self-hosted, linux, x64, haskell]
             os-name: linux
             arch: x86_64
-            ext: ''
-            archive: tar.gz
-          - runner: ubuntu-24.04-arm
-            os-name: linux
-            arch: arm64
             ext: ''
             archive: tar.gz
           - runner: macos-15
@@ -38,11 +33,6 @@ jobs:
             arch: arm64
             ext: ''
             archive: tar.gz
-          - runner: windows-latest
-            os-name: windows
-            arch: x86_64
-            ext: '.exe'
-            archive: zip
 
     steps:
       - name: Checkout
@@ -116,7 +106,7 @@ jobs:
   publish:
     name: Publish Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, haskell]
     timeout-minutes: 15
 
     steps:

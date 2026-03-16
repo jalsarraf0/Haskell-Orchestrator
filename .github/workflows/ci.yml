@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build-and-test:
     name: Build and Test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, haskell]
     timeout-minutes: 30
 
     strategy:
@@ -60,7 +60,7 @@ jobs:
 
   attribution-check:
     name: Attribution Leak Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, haskell]
     timeout-minutes: 5
     steps:
       - name: Checkout
@@ -87,7 +87,7 @@ jobs:
 
   capability-contract:
     name: Capability Contract Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, haskell]
     timeout-minutes: 5
     steps:
       - name: Checkout

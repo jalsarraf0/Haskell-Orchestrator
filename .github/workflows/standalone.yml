@@ -16,7 +16,7 @@ concurrency:
 jobs:
   standalone-binary:
     name: Standalone Binary Verification
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, haskell]
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
 
   packaging-check:
     name: Packaging Independence Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, haskell]
     timeout-minutes: 5
     steps:
       - name: Checkout
