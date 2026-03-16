@@ -7,7 +7,6 @@ on:
 permissions:
   contents: write
   id-token: write
-  attestations: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -233,11 +232,6 @@ jobs:
           with open(f"release/sbom-{sbom['metadata']['component']['version']}.json", "w") as out:
               json.dump(sbom, out, indent=2)
           PYEOF
-
-      - name: Attest artifacts
-        uses: actions/attest-build-provenance@v4
-        with:
-          subject-path: 'release/haskell-orchestrator-*'
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
