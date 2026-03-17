@@ -61,6 +61,9 @@ jobs:
           cabal install exe:orchestrator --install-method=copy --overwrite-policy=always --installdir=_bin
 
       - name: Verify standalone installation
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: bash scripts/verify-standalone-install.sh _bin/orchestrator
 
   packaging-check:
