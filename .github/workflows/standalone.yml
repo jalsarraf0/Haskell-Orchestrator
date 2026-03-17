@@ -1,0 +1,86 @@
+name: Standalone Install Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: standalone-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  standalone-binary:
+    name: Standalone Binary Verification
+    runs-on: [self-hosted, linux, haskell]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.6.7'
+          cabal-version: '3.14'
+
+      - name: Cache Cabal store
+        uses: actions/cache@v5
+        with:
+          path: ~/.cabal/store
+          key: ${{ runner.os }}-standalone-${{ hashFiles('orchestrator.cabal', 'cabal.project') }}
+          restore-keys: |
+            ${{ runner.os }}-standalone-
+
+      - name: Build and install binary
+        run: |
+          cabal update
+          cabal build all
+          mkdir -p _bin
+          cabal install exe:orchestrator --install-method=copy --overwrite-policy=always --installdir=_bin
+
+      - name: Verify standalone installation
+        run: bash scripts/verify-standalone-install.sh _bin/orchestrator
+
+  packaging-check:
+    name: Packaging Independence Check
+    runs-on: [self-hosted, linux, haskell]
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify no cross-edition dependencies
+        run: |
+          FAIL=0
+
+          # Binary name must be 'orchestrator' (not orchestrator-business or -enterprise)
+          if ! grep -q 'executable orchestrator$' orchestrator.cabal; then
+            echo "FAIL: Expected executable named 'orchestrator'"
+            FAIL=1
+          fi
+
+          # No imports from Business or Enterprise modules
+          if grep -rI --include='*.hs' 'OrchestratorBusiness\|OrchestratorEnterprise' src/ app/ 2>/dev/null; then
+            echo "FAIL: Source imports premium modules"
+            FAIL=1
+          fi
+
+          # cabal.project should only reference self
+          if grep -q '\.\./business\|\.\./enterprise' cabal.project 2>/dev/null; then
+            echo "FAIL: cabal.project references other editions"
+            FAIL=1
+          fi
+
+          # README should not require other editions
+          if grep -qi 'requires.*business\|requires.*enterprise\|install.*business.*first\|install.*enterprise.*first' README.md 2>/dev/null; then
+            echo "FAIL: README implies dependency on other editions"
+            FAIL=1
+          fi
+
+          [ $FAIL -eq 0 ] && echo "Packaging independence check passed"
+          exit $FAIL

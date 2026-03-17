@@ -1,0 +1,272 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.os-name }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: [self-hosted, linux, x64, haskell]
+            os-name: linux
+            arch: x86_64
+            ext: ''
+            archive: tar.gz
+            ghc-preinstalled: true
+          - runner: macos-15
+            os-name: macos
+            arch: arm64
+            ext: ''
+            archive: tar.gz
+            ghc-preinstalled: false
+          - runner: [self-hosted, windows, x64, haskell]
+            os-name: windows
+            arch: x86_64
+            ext: '.exe'
+            archive: zip
+            ghc-preinstalled: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Haskell (GitHub-hosted)
+        if: ${{ !matrix.ghc-preinstalled }}
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.6.7'
+          cabal-version: '3.14'
+
+      - name: Setup Haskell paths (self-hosted Linux)
+        if: ${{ matrix.ghc-preinstalled && runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          echo "$HOME/.ghcup/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.cabal/bin" >> "$GITHUB_PATH"
+
+      - name: Setup Haskell paths (self-hosted Windows)
+        if: ${{ matrix.ghc-preinstalled && runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          $paths = @('C:\msys64\usr\bin', 'C:\ghcup\bin', "C:\Users\$env:USERNAME\.ghcup\bin", "C:\Users\$env:USERNAME\AppData\Roaming\cabal\bin")
+          foreach ($p in $paths) {
+            if (Test-Path $p) { Add-Content $env:GITHUB_PATH $p }
+          }
+
+      - name: Cache Cabal
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: release-${{ matrix.os-name }}-${{ matrix.arch }}-${{ hashFiles('**/*.cabal', 'cabal.project') }}
+
+      - name: Update and build (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cabal update
+          cabal build exe:orchestrator -O2
+          mkdir -p _bin
+          cabal install exe:orchestrator -O2 --install-method=copy --overwrite-policy=always --installdir=_bin
+
+      - name: Update and build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cabal update
+          cabal build exe:orchestrator -O2
+          New-Item -ItemType Directory -Force -Path _bin | Out-Null
+          cabal install exe:orchestrator -O2 --install-method=copy --overwrite-policy=always --installdir=_bin
+
+      - name: Run tests
+        run: cabal test all --test-show-details=direct
+
+      - name: Package artifact (Unix)
+        if: runner.os != 'Windows'
+        id: package-unix
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PRODUCT="haskell-orchestrator"
+          ASSET_NAME="${PRODUCT}-${VERSION}-${{ matrix.os-name }}-${{ matrix.arch }}"
+          STAGING="staging/${ASSET_NAME}"
+          mkdir -p "${STAGING}"
+          cp "_bin/orchestrator" "${STAGING}/orchestrator"
+          cp README.md LICENSE CHANGELOG.md "${STAGING}/"
+          tar -czf "staging/${ASSET_NAME}.tar.gz" -C staging "${ASSET_NAME}"
+          echo "asset=staging/${ASSET_NAME}.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "asset_name=${ASSET_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Package artifact (Windows)
+        if: runner.os == 'Windows'
+        id: package-windows
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $product = "haskell-orchestrator"
+          $assetName = "${product}-${version}-windows-x86_64"
+          $staging = "staging\${assetName}"
+          New-Item -ItemType Directory -Force -Path $staging | Out-Null
+          Copy-Item "_bin\orchestrator.exe" "${staging}\orchestrator.exe"
+          Copy-Item "README.md", "LICENSE", "CHANGELOG.md" $staging
+          Push-Location staging
+          7z a -tzip "${assetName}.zip" "${assetName}\"
+          Pop-Location
+          "asset=staging/${assetName}.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "version=${version}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "asset_name=${assetName}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Generate checksums (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd staging
+          sha256sum *.tar.gz *.zip 2>/dev/null > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt
+
+      - name: Generate checksums (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem staging -Include *.zip -Recurse
+          $results = foreach ($f in $files) {
+            $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($f.Name)"
+          }
+          $results | Set-Content staging\SHA256SUMS.txt
+          Get-Content staging\SHA256SUMS.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os-name }}-${{ matrix.arch }}
+          path: |
+            staging/*.tar.gz
+            staging/*.zip
+            staging/SHA256SUMS.txt
+          retention-days: 5
+
+  publish:
+    name: Publish Release
+    needs: build
+    if: ${{ always() && needs.build.result != 'cancelled' }}
+    runs-on: [self-hosted, linux, haskell]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Prepare release assets
+        id: prep
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release
+          find artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} release/ \;
+          cd release
+          sha256sum * > "SHA256SUMS-${VERSION}.txt"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          ls -la
+
+      - name: Setup Haskell paths (self-hosted Linux)
+        shell: bash
+        run: |
+          echo "$HOME/.ghcup/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.cabal/bin" >> "$GITHUB_PATH"
+          echo "/usr/local/bin" >> "$GITHUB_PATH"
+          echo "/usr/bin" >> "$GITHUB_PATH"
+          echo "/bin" >> "$GITHUB_PATH"
+
+      - name: Generate SBOM
+        run: |
+          VERSION="${{ steps.prep.outputs.version }}"
+          cabal update
+          cabal freeze
+          python3 << 'PYEOF'
+          import json, re
+          sbom = {
+            "bomFormat": "CycloneDX",
+            "specVersion": "1.5",
+            "version": 1,
+            "metadata": {
+              "component": {
+                "type": "application",
+                "name": "haskell-orchestrator",
+                "version": "${{ steps.prep.outputs.version }}"
+              }
+            },
+            "components": []
+          }
+          with open("cabal.project.freeze") as f:
+              for line in f:
+                  m = re.search(r"any\.(\S+)\s+==(\S+)", line)
+                  if m:
+                      sbom["components"].append({
+                          "type": "library",
+                          "name": m.group(1),
+                          "version": m.group(2)
+                      })
+          with open(f"release/sbom-{sbom['metadata']['component']['version']}.json", "w") as out:
+              json.dump(sbom, out, indent=2)
+          PYEOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Haskell Orchestrator v${{ steps.prep.outputs.version }}"
+          body: |
+            ## Haskell Orchestrator v${{ steps.prep.outputs.version }}
+
+            Workflow standardization, drift detection, and remediation planning for GitHub Actions.
+
+            ### Downloads
+
+            | Platform | Architecture | File |
+            |----------|-------------|------|
+            | Linux | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64.tar.gz` |
+            | Linux | arm64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-arm64.tar.gz` |
+            | macOS | Apple Silicon (arm64) | `haskell-orchestrator-${{ steps.prep.outputs.version }}-macos-arm64.tar.gz` |
+            | Windows | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-windows-x86_64.zip` |
+
+            ### Verification
+
+            ```bash
+            sha256sum -c SHA256SUMS-${{ steps.prep.outputs.version }}.txt
+            gh attestation verify haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64.tar.gz --owner jalsarraf0
+            ```
+
+            ### Quick Start
+
+            ```bash
+            tar xzf haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64.tar.gz
+            cd haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64
+            ./orchestrator demo
+            ./orchestrator scan /path/to/repo
+            ```
+          files: |
+            release/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

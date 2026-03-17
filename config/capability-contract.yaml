@@ -1,0 +1,336 @@
+# Haskell Orchestrator — Capability Contract
+# This manifest defines the formal ownership of every product capability.
+# Validation scripts check code, docs, and CLI against this contract.
+#
+# Fields:
+#   id:           Unique capability identifier (CAP-XXXX)
+#   name:         Human-readable name
+#   domain:       Capability domain (scanning, validation, policy, etc.)
+#   description:  What the capability does
+#   owner:        Tier that owns this capability (community, business, enterprise)
+#   exposed_in:   List of tiers allowed to expose it
+#   forbidden_in: List of tiers that must NOT expose it
+#   cli_surface:  CLI commands/flags that implement it
+#   modules:      Haskell modules that implement it
+#   public_safe:  Whether this capability is safe for public/OSS release
+#   governance:   Whether this is a governance-sensitive capability
+#   admin_only:   Whether this requires admin/operator privileges
+#   audit:        Whether this involves audit/compliance functionality
+
+capabilities:
+
+  # ── Scanning Domain ──
+
+  - id: CAP-0001
+    name: Single-repo scanning
+    domain: scanning
+    description: Scan a single repository for GitHub Actions workflow files
+    owner: community
+    exposed_in: [community, business, enterprise]
+    forbidden_in: []
+    cli_surface: ["orchestrator scan PATH"]
+    modules: [Orchestrator.Scan]
+    public_safe: true
+    governance: false
+    admin_only: false
+    audit: false
+
+  - id: CAP-0002
+    name: Multi-repo batch scanning
+    domain: scanning
+    description: Scan multiple repositories in a single bounded-parallelism pass
+    owner: business
+    exposed_in: [business, enterprise]
+    forbidden_in: [community]
+    cli_surface: ["orchestrator-business batch PATH..."]
+    modules: [OrchestratorBusiness.Batch]
+    public_safe: false
+    governance: false
+    admin_only: false
+    audit: false
+
+  - id: CAP-0003
+    name: Organisation-wide scanning
+    domain: scanning
+    description: Scan all repositories in a GitHub organisation with governance checks
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise admin scan"]
+    modules: [OrchestratorEnterprise.Admin]
+    public_safe: false
+    governance: true
+    admin_only: true
+    audit: true
+
+  # ── Validation Domain ──
+
+  - id: CAP-0010
+    name: Structural validation
+    domain: validation
+    description: Validate workflow structure (empty jobs, dangling needs, duplicates)
+    owner: community
+    exposed_in: [community, business, enterprise]
+    forbidden_in: []
+    cli_surface: ["orchestrator validate PATH"]
+    modules: [Orchestrator.Validate]
+    public_safe: true
+    governance: false
+    admin_only: false
+    audit: false
+
+  # ── Policy Domain ──
+
+  - id: CAP-0020
+    name: Standard policy pack
+    domain: policy
+    description: 10 built-in policy rules (permissions, security, naming, structure)
+    owner: community
+    exposed_in: [community, business, enterprise]
+    forbidden_in: []
+    cli_surface: ["orchestrator scan", "orchestrator rules", "orchestrator explain"]
+    modules: [Orchestrator.Policy]
+    public_safe: true
+    governance: false
+    admin_only: false
+    audit: false
+
+  - id: CAP-0021
+    name: Team policy pack
+    domain: policy
+    description: 4 additional team-oriented rules (naming, branch protection, reviewers, deps)
+    owner: business
+    exposed_in: [business, enterprise]
+    forbidden_in: [community]
+    cli_surface: ["orchestrator-business scan"]
+    modules: [OrchestratorBusiness.Policy]
+    public_safe: false
+    governance: false
+    admin_only: false
+    audit: false
+
+  - id: CAP-0022
+    name: Governance policy engine
+    domain: policy
+    description: Organisation-wide policies with typed enforcement levels
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise governance"]
+    modules: [OrchestratorEnterprise.Governance]
+    public_safe: false
+    governance: true
+    admin_only: false
+    audit: false
+
+  # ── Diff Domain ──
+
+  - id: CAP-0030
+    name: Diff generation
+    domain: diff
+    description: Show current issues compared to policy standards
+    owner: community
+    exposed_in: [community, business, enterprise]
+    forbidden_in: []
+    cli_surface: ["orchestrator diff PATH"]
+    modules: [Orchestrator.Diff]
+    public_safe: true
+    governance: false
+    admin_only: false
+    audit: false
+
+  # ── Remediation Domain ──
+
+  - id: CAP-0040
+    name: Basic remediation planning
+    domain: remediation
+    description: Generate ordered remediation steps from findings
+    owner: community
+    exposed_in: [community, business, enterprise]
+    forbidden_in: []
+    cli_surface: ["orchestrator plan PATH"]
+    modules: [Orchestrator.Diff]
+    public_safe: true
+    governance: false
+    admin_only: false
+    audit: false
+
+  - id: CAP-0041
+    name: Prioritised remediation with effort estimates
+    domain: remediation
+    description: Quick-fix vs comprehensive strategies with Low/Medium/High effort
+    owner: business
+    exposed_in: [business, enterprise]
+    forbidden_in: [community]
+    cli_surface: ["orchestrator-business plan --quick"]
+    modules: [OrchestratorBusiness.Remediation]
+    public_safe: false
+    governance: false
+    admin_only: false
+    audit: false
+
+  # ── Reporting Domain ──
+
+  - id: CAP-0050
+    name: Text and JSON output
+    domain: reporting
+    description: Plain text and JSON output formats
+    owner: community
+    exposed_in: [community, business, enterprise]
+    forbidden_in: []
+    cli_surface: ["--json"]
+    modules: [Orchestrator.Render]
+    public_safe: true
+    governance: false
+    admin_only: false
+    audit: false
+
+  - id: CAP-0051
+    name: HTML and CSV reports
+    domain: reporting
+    description: Self-contained HTML reports and CSV export
+    owner: business
+    exposed_in: [business, enterprise]
+    forbidden_in: [community]
+    cli_surface: ["orchestrator-business report --html", "orchestrator-business report --csv"]
+    modules: [OrchestratorBusiness.Report]
+    public_safe: false
+    governance: false
+    admin_only: false
+    audit: false
+
+  - id: CAP-0052
+    name: Summary statistics
+    domain: reporting
+    description: Aggregate finding counts by severity and category
+    owner: business
+    exposed_in: [business, enterprise]
+    forbidden_in: [community]
+    cli_surface: ["orchestrator-business stats"]
+    modules: [OrchestratorBusiness.Report]
+    public_safe: false
+    governance: false
+    admin_only: false
+    audit: false
+
+  # ── Governance Domain ──
+
+  - id: CAP-0060
+    name: Governance enforcement
+    domain: governance
+    description: Enforce org-wide policies with Advisory/Mandatory/Blocking levels
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise governance enforce"]
+    modules: [OrchestratorEnterprise.Governance]
+    public_safe: false
+    governance: true
+    admin_only: true
+    audit: true
+
+  - id: CAP-0061
+    name: Policy scoping
+    domain: governance
+    description: Scope policies to AllRepos, RepoPattern, or SpecificRepos
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise governance"]
+    modules: [OrchestratorEnterprise.Governance]
+    public_safe: false
+    governance: true
+    admin_only: false
+    audit: false
+
+  # ── Audit Domain ──
+
+  - id: CAP-0070
+    name: Immutable audit trail
+    domain: audit
+    description: Append-only audit log of governance actions
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise audit"]
+    modules: [OrchestratorEnterprise.Audit]
+    public_safe: false
+    governance: true
+    admin_only: false
+    audit: true
+
+  - id: CAP-0071
+    name: Audit log export
+    domain: audit
+    description: Export audit trail as JSON or CSV
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise audit export"]
+    modules: [OrchestratorEnterprise.Audit]
+    public_safe: false
+    governance: true
+    admin_only: false
+    audit: true
+
+  # ── Compliance Domain ──
+
+  - id: CAP-0080
+    name: Compliance framework mapping
+    domain: compliance
+    description: Map policies to SOC 2, HIPAA controls
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise compliance"]
+    modules: [OrchestratorEnterprise.Compliance]
+    public_safe: false
+    governance: true
+    admin_only: false
+    audit: true
+
+  - id: CAP-0081
+    name: Compliance artifact generation
+    domain: compliance
+    description: Generate evidence documents for auditors
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise admin export"]
+    modules: [OrchestratorEnterprise.Compliance]
+    public_safe: false
+    governance: true
+    admin_only: true
+    audit: true
+
+  # ── Admin Domain ──
+
+  - id: CAP-0090
+    name: Administrative workflows
+    domain: admin
+    description: Org-wide enforce, scan, export, and status commands
+    owner: enterprise
+    exposed_in: [enterprise]
+    forbidden_in: [community, business]
+    cli_surface: ["orchestrator-enterprise admin"]
+    modules: [OrchestratorEnterprise.Admin]
+    public_safe: false
+    governance: true
+    admin_only: true
+    audit: true
+
+  # ── Demo Domain ──
+
+  - id: CAP-0100
+    name: Demo mode
+    domain: demo
+    description: Synthetic workflow fixtures for evaluation
+    owner: community
+    exposed_in: [community, business, enterprise]
+    forbidden_in: []
+    cli_surface: ["orchestrator demo"]
+    modules: [Orchestrator.Demo]
+    public_safe: true
+    governance: false
+    admin_only: false
+    audit: false
