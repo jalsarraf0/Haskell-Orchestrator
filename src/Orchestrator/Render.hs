@@ -4,6 +4,7 @@
 module Orchestrator.Render
   ( renderFindings
   , renderFindingsJSON
+  , findingToJSON
   , renderScanResult
   , renderSummary
   , OutputFormat (..)

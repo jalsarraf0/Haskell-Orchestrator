@@ -96,4 +96,4 @@ extractStringLiteral expr =
       doubleQuoted = T.takeWhile (/= '"') afterDQuote
   in if not (T.null singleQuoted) then singleQuoted
      else if not (T.null doubleQuoted) then doubleQuoted
-     else T.strip $ snd $ T.breakOn "==" expr  -- Fallback
+     else T.strip $ T.drop 2 $ snd $ T.breakOn "==" expr  -- Fallback

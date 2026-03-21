@@ -15,6 +15,7 @@ module Orchestrator.Hook
   , runHookCheck
   ) where
 
+import Control.Exception (IOException, try)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
@@ -121,14 +122,17 @@ hookScript = T.unlines
 -- and evaluates policies on each, and returns all findings.
 runHookCheck :: FilePath -> IO [Finding]
 runHookCheck repoRoot = do
-  output <- readProcess "git"
+  result <- try $ readProcess "git"
     ["-C", repoRoot, "diff", "--cached", "--name-only", "--diff-filter=ACM"]
-    ""
-  let allFiles = lines output
-      wfFiles  = filter isWorkflowPath allFiles
-      fullPaths = map (repoRoot </>) wfFiles
-  findings <- mapM scanOneFile fullPaths
-  pure $ concat findings
+    "" :: IO (Either IOException String)
+  case result of
+    Left _ -> pure []
+    Right output -> do
+      let allFiles = lines output
+          wfFiles  = filter isWorkflowPath allFiles
+          fullPaths = map (repoRoot </>) wfFiles
+      findings <- mapM scanOneFile fullPaths
+      pure $ concat findings
   where
     isWorkflowPath :: String -> Bool
     isWorkflowPath fp =
@@ -137,7 +141,7 @@ runHookCheck repoRoot = do
 
     scanOneFile :: FilePath -> IO [Finding]
     scanOneFile fp = do
-      result <- parseWorkflowFile fp
-      case result of
+      parseResult <- parseWorkflowFile fp
+      case parseResult of
         Left _ -> pure []
         Right wf -> pure $ evaluatePolicies defaultPolicyPack wf

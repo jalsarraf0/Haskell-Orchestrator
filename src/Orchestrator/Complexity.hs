@@ -16,6 +16,7 @@ module Orchestrator.Complexity
 
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
+import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Text qualified as T
 import Orchestrator.Model
@@ -159,11 +160,14 @@ estimateLines steps =
 nestingDepth :: [Job] -> Int
 nestingDepth jobs =
   let idMap = Map.fromList [(jobId j, j) | j <- jobs]
-      depth :: Job -> Int
-      depth j = case jobNeeds j of
+      depth :: Set.Set Text -> Job -> Int
+      depth visited j = case jobNeeds j of
         [] -> 0
-        ns -> 1 + maximum (map (\n -> maybe 0 depth (Map.lookup n idMap)) ns)
-  in if null jobs then 0 else maximum (map depth jobs)
+        ns -> 1 + maximum (map (\n ->
+          if Set.member n visited
+          then 0
+          else maybe 0 (depth (Set.insert n visited)) (Map.lookup n idMap)) ns)
+  in if null jobs then 0 else maximum (map (depth Set.empty) jobs)
 
 -- | Count ${{ ... }} expression occurrences across all steps.
 countExpressions :: [Step] -> Int

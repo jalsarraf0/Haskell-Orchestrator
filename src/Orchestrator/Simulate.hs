@@ -62,8 +62,8 @@ branchMatches _ [] = True
 branchMatches branch filters = any (matchBranch branch) filters
   where
     matchBranch b pat
-      | "*" `T.isSuffixOf` pat = T.init pat `T.isPrefixOf` b
       | "**" `T.isInfixOf` pat = True
+      | "*" `T.isSuffixOf` pat = T.init pat `T.isPrefixOf` b
       | otherwise = b == pat
 
 expandJob :: SimContext -> Job -> [SimulatedJob]
@@ -119,7 +119,7 @@ resolveDependencies jobs =
         let blockers = [ n | n <- sjNeeds j
                        , case Map.findWithDefault WillRun n statusMap of
                            WillSkip _ -> True; Blocked _ -> True; _ -> False ]
-        in if null blockers || null (sjNeeds j)
+        in if null blockers
            then j
            else j { sjStatus = Blocked $ "Blocked by: " <> T.intercalate ", " blockers }
   in map resolve jobs

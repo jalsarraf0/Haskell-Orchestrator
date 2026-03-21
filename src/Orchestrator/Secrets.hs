@@ -116,8 +116,7 @@ analyzeJob fp j =
 -- | Analyze a single step for secret references.
 analyzeStep :: FilePath -> Text -> Step -> [SecretRef]
 analyzeStep fp jid s =
-  let stepLabel = stepId s <> stepName s  -- prefer id, fall back to name
-      label     = case (stepId s, stepName s) of
+  let label     = case (stepId s, stepName s) of
                     (Just sid, _) -> Just sid
                     (_, Just nm)  -> Just nm
                     _             -> Nothing

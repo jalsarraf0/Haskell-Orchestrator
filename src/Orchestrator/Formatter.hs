@@ -111,7 +111,6 @@ splitTopLevelBlocks ls = go ls []
     isChildLine line =
       T.null line
       || isSpace (T.head line)
-      || ("#" `T.isPrefixOf` T.stripStart line && not (T.null line) && isSpace (T.head line))
 
 -- | Sort top-level blocks in canonical GitHub Actions order.
 sortBlocks :: [TopBlock] -> [TopBlock]

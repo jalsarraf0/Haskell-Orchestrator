@@ -19,7 +19,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 
-import Orchestrator.Render (renderFindingsJSON)
+import Orchestrator.Render (findingToJSON)
 import Orchestrator.Types
   ( Finding (..)
   , ScanResult (..)
@@ -54,7 +54,7 @@ renderAPIJSON dd =
     , "edition"    .= ddEdition dd
     , "ruleCount"  .= ddRuleCount dd
     , "totalFindings" .= length (ddFindings dd)
-    , "findings"   .= Aeson.toJSON (renderFindingsJSON (ddFindings dd))
+    , "findings"   .= map findingToJSON (ddFindings dd)
     , "summary"    .= object
         [ "errors"   .= countBySev Error (ddFindings dd)
         , "critical" .= countBySev Critical (ddFindings dd)
@@ -466,7 +466,7 @@ showT :: Show a => a -> Text
 showT = T.pack . show
 
 escapeHtml :: Text -> Text
-escapeHtml = T.replace "&" "&amp;"
-           . T.replace "<" "&lt;"
+escapeHtml = T.replace "\"" "&quot;"
            . T.replace ">" "&gt;"
-           . T.replace "\"" "&quot;"
+           . T.replace "<" "&lt;"
+           . T.replace "&" "&amp;"

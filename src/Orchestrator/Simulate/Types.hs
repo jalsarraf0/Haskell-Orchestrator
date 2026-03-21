@@ -15,7 +15,6 @@ module Orchestrator.Simulate.Types
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
-import Data.Text qualified as T
 import Orchestrator.Model (RunnerSpec (..))
 
 -- | Mock GitHub context for simulation.
