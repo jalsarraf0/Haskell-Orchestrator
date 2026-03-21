@@ -18,6 +18,7 @@ import Orchestrator.Render
 import Orchestrator.Render.Markdown (renderMarkdownFindings, renderMarkdownSummary)
 import Orchestrator.Render.Sarif (renderSarifJSON)
 import Orchestrator.Render.Upgrade (renderUpgradePath)
+import Orchestrator.UI.Server (startDashboard, defaultServerConfig, ServerConfig (..))
 import Orchestrator.Scan (findWorkflowFiles, scanLocalPath)
 import Orchestrator.Parser (parseWorkflowFile)
 import Orchestrator.Types
@@ -43,6 +44,7 @@ main = do
     CmdVerify          -> runVerify opts
     CmdBaseline p      -> runBaseline opts p
     CmdUpgradePath p   -> runUpgradePath opts p
+    CmdUI p mPort      -> runUI p mPort
 
 -- | Select the policy pack to use.
 activePack :: PolicyPack
@@ -289,6 +291,12 @@ runUpgradePath opts path = do
   case result of
     Left err -> hPutStrLn stderr $ "Error: " ++ show err
     Right sr -> TIO.putStr $ renderUpgradePath (scanFindings sr)
+
+runUI :: FilePath -> Maybe Int -> IO ()
+runUI path mPort = do
+  let cfg = (defaultServerConfig path)
+              { scPort = maybe 8420 id mPort }
+  startDashboard cfg
 
 -- | Apply baseline filtering if --baseline was provided.
 applyBaseline :: Options -> [Finding] -> IO [Finding]

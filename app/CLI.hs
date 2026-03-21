@@ -39,6 +39,7 @@ data Command
   | CmdRules
   | CmdBaseline !FilePath          -- ^ save baseline
   | CmdUpgradePath !FilePath       -- ^ show upgrade path
+  | CmdUI !FilePath !(Maybe Int)   -- ^ path, optional port
   deriving stock (Show)
 
 parseOptions :: ParserInfo Options
@@ -127,6 +128,10 @@ commandParser = subparser
   <> command "upgrade-path"
       (info (CmdUpgradePath <$> pathArg)
         (progDesc "Show what Business/Enterprise editions would add"))
+  <> command "ui"
+      (info (CmdUI <$> pathArg <*> optional (option auto
+              (long "port" <> short 'p' <> metavar "PORT" <> help "Server port (default: 8420)")))
+        (progDesc "Launch web dashboard (LAN + Tailscale only)"))
   )
 
 pathArg :: Parser FilePath
