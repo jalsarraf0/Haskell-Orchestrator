@@ -1,7 +1,7 @@
 -- | HTTP server for the Orchestrator web dashboard.
 --
 -- Serves the embedded dashboard HTML and JSON API endpoints on
--- LAN and Tailscale interfaces only. Never binds to 0.0.0.0.
+-- localhost, LAN, and Tailscale interfaces. Never binds to 0.0.0.0.
 module Orchestrator.UI.Server
   ( -- * Server
     startDashboard
@@ -37,7 +37,9 @@ import Orchestrator.UI (DashboardData (..), renderDashboardHTML, renderAPIJSON)
 
 -- | Which address to bind to.
 data BindAddress
-  = BindLAN           -- ^ 192.168.50.5 (enp5s0)
+  = BindLocalhost     -- ^ 127.0.0.1 (IPv4 loopback)
+  | BindLocalhost6    -- ^ ::1 (IPv6 loopback)
+  | BindLAN           -- ^ 192.168.50.5 (enp5s0)
   | BindTailscale     -- ^ 100.111.198.19 (tailscale0)
   | BindSpecific !Text -- ^ Custom IP address
   deriving stock (Eq, Show)
@@ -50,17 +52,19 @@ data ServerConfig = ServerConfig
   , scOpenBrowser :: !Bool
   } deriving stock (Eq, Show)
 
--- | Default server config: LAN + Tailscale, port 8420, auto-open browser.
+-- | Default server config: localhost + LAN + Tailscale, port 8420, auto-open browser.
 defaultServerConfig :: FilePath -> ServerConfig
 defaultServerConfig path = ServerConfig
   { scPort = 8420
-  , scBindAddrs = [BindLAN, BindTailscale]
+  , scBindAddrs = [BindLocalhost, BindLocalhost6, BindLAN, BindTailscale]
   , scScanPath = path
   , scOpenBrowser = True
   }
 
 -- | Resolve a BindAddress to an IP string.
 resolveAddr :: BindAddress -> String
+resolveAddr BindLocalhost = "127.0.0.1"
+resolveAddr BindLocalhost6 = "::1"
 resolveAddr BindLAN = "192.168.50.5"
 resolveAddr BindTailscale = "100.111.198.19"
 resolveAddr (BindSpecific ip) = T.unpack ip
@@ -77,13 +81,13 @@ startDashboard cfg = do
 
   -- Build dashboard data
   dataRef <- newIORef $ case scanResult of
-    Left _ -> DashboardData [] Nothing 21 "2.5.0" "Enterprise"
+    Left _ -> DashboardData [] Nothing 21 "2.5.0" "Community"
     Right sr -> DashboardData
       { ddFindings = scanFindings sr
       , ddScanResult = Just sr
       , ddRuleCount = 21
       , ddVersion = "2.5.0"
-      , ddEdition = "Enterprise"
+      , ddEdition = "Community"
       }
 
   let app = dashboardApp dataRef (scScanPath cfg)
@@ -158,7 +162,7 @@ dashboardApp dataRef scanPath req respond = do
             , ddScanResult = Just sr
             , ddRuleCount = 21
             , ddVersion = "2.5.0"
-            , ddEdition = "Enterprise"
+            , ddEdition = "Community"
             }
           dd <- readIORef dataRef
           respond $ jsonResponse $ renderAPIJSON dd
