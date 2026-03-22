@@ -18,20 +18,7 @@ concurrency:
 
 jobs:
   repo-guard:
-    name: Repository Context Guard
-    runs-on: [self-hosted, Linux, X64, haskell, unified-all]
-    timeout-minutes: 2
-    steps:
-      - name: Verify repository ownership
-        run: |
-          echo "Repository: ${{ github.repository }}"
-          if [ "${{ github.repository }}" != "jalsarraf0/Haskell-Orchestrator" ] && \
-             [ "${{ github.repository }}" != "Al-Sarraf-Tech/Haskell-Orchestrator" ]; then
-            echo "::error::SECURITY VIOLATION: This workflow must only run in authorised Haskell-Orchestrator repositories."
-            echo "::error::Detected repository: ${{ github.repository }}"
-            exit 1
-          fi
-          echo "Repository context verified: ${{ github.repository }}"
+    uses: ./.github/workflows/repo-guard.yml
 
   dependency-audit:
     name: Dependency Audit

@@ -14,21 +14,7 @@ concurrency:
 
 jobs:
   repo-guard:
-    name: Repository Context Guard
-    runs-on: [self-hosted, Linux, X64, haskell, unified-all]
-    timeout-minutes: 2
-    steps:
-      - name: Verify repository ownership
-        shell: bash
-        run: |
-          echo "Repository: ${{ github.repository }}"
-          if [ "${{ github.repository }}" != "jalsarraf0/Haskell-Orchestrator" ] && \
-             [ "${{ github.repository }}" != "Al-Sarraf-Tech/Haskell-Orchestrator" ]; then
-            echo "::error::SECURITY VIOLATION: This workflow must only run in authorised Haskell-Orchestrator repositories."
-            echo "::error::Detected repository: ${{ github.repository }}"
-            exit 1
-          fi
-          echo "Repository context verified: ${{ github.repository }}"
+    uses: ./.github/workflows/repo-guard.yml
 
   build:
     name: Build ${{ matrix.os-name }}-${{ matrix.arch }}
@@ -68,14 +54,12 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # GHCup and cabal
+          # GHCup install at C:\ghcup (unified — no user-profile .ghcup)
           echo "C:\ghcup\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-          echo "$env:USERPROFILE\.ghcup\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           # MSYS sh.exe required by packages with ./configure scripts (network, old-time)
           echo "C:\Program Files\Git\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           $cabalDir = "$env:APPDATA\cabal"
           echo "CABAL_DIR=$cabalDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          echo "CABAL_APPDATA=$cabalDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Cache Cabal
         uses: actions/cache@v4
@@ -101,8 +85,6 @@ jobs:
       - name: Update and build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        env:
-          CABAL_DIR: C:\Users\runneruser\AppData\Roaming\cabal
         run: |
           cabal update
           cabal build exe:orchestrator -O2
