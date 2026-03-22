@@ -3,6 +3,8 @@ name: Repository Context Guard
 on:
   workflow_call:
 
+permissions: {}
+
 jobs:
   repo-guard:
     name: Repository Context Guard
