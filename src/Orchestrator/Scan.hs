@@ -36,10 +36,18 @@ scanLocalPath pack cfg root = do
     else do
       files <- findWorkflowFiles (scMaxDepth cfg) wfDir
       results <- mapM parseAndCheck files
+      -- Post-scan filter: suppress BIZ-DEP-001 when .github/dependabot.yml exists.
+      -- Dependency update automation is a repo-level concern; the rule can't see
+      -- files outside the workflow, so we filter at the scan level.
+      let depFile = root </> ".github" </> "dependabot.yml"
+      hasDependabot <- doesFileExist depFile
       let allFindings = concatMap snd results
+          filtered = if hasDependabot
+            then filter (\f -> findingRuleId f /= "BIZ-DEP-001") allFindings
+            else allFindings
       pure $ Right ScanResult
         { scanTarget = LocalPath root
-        , scanFindings = allFindings
+        , scanFindings = filtered
         , scanFiles = files
         , scanTime = Nothing
         }
