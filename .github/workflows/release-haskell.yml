@@ -180,7 +180,7 @@ jobs:
     name: Publish Release
     needs: build
     if: ${{ always() && needs.build.result != 'cancelled' }}
-    runs-on: [self-hosted, unified-all]
+    runs-on: [self-hosted, Linux, unified-all]
     timeout-minutes: 15
 
     steps:
