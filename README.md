@@ -8,6 +8,8 @@
 **Workflow standardization, drift detection, and remediation planning for
 GitHub Actions.**
 
+> **Governance Status** — Scanned by [Haskell Orchestrator Enterprise](https://github.com/jalsarraf0/Haskell-Orchestrator) v3.0.2 on 2026-03-22: **0 findings** across 21 governance rules.
+
 Stop treating CI/CD workflows as one-off configs that nobody reviews.
 Haskell Orchestrator discovers workflow sprawl, detects drift from your
 standards, validates against configurable policies, and generates clean
