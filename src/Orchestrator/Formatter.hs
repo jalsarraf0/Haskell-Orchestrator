@@ -104,13 +104,13 @@ splitTopLevelBlocks ls = go ls []
 
     isTopLevelKey line =
       not (T.null line)
-      && maybe False (not . isSpace) (fst <$> T.uncons line)
+      && maybe False ((not . isSpace) . fst) (T.uncons line)
       && not ("#" `T.isPrefixOf` T.stripStart line)
       && ":" `T.isInfixOf` line
 
     isChildLine line =
       T.null line
-      || maybe False isSpace (fst <$> T.uncons line)
+      || maybe False (isSpace . fst) (T.uncons line)
 
 -- | Sort top-level blocks in canonical GitHub Actions order.
 sortBlocks :: [TopBlock] -> [TopBlock]

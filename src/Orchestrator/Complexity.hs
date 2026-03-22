@@ -14,6 +14,7 @@ module Orchestrator.Complexity
   , renderComplexity
   ) where
 
+import Data.Maybe (isJust, maybeToList)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -175,9 +176,9 @@ countExpressions = sum . map stepExprCount
   where
     stepExprCount s =
       let texts = concat
-            [ maybe [] (:[]) (stepRun s)
-            , maybe [] (:[]) (stepName s)
-            , maybe [] (:[]) (stepIf s)
+            [ maybeToList (stepRun s)
+            , maybeToList (stepName s)
+            , maybeToList (stepIf s)
             , Map.elems (stepWith s)
             , Map.elems (stepEnv s)
             ]
@@ -199,10 +200,10 @@ maxMatrixDims :: [Job] -> Int
 maxMatrixDims jobs =
   let dimCount j =
         let texts = concatMap (\s -> concat
-              [ maybe [] (:[]) (stepRun s)
-              , maybe [] (:[]) (stepName s)
-              , maybe [] (:[]) (stepIf s)
-              , maybe [] (:[]) (stepUses s)
+              [ maybeToList (stepRun s)
+              , maybeToList (stepName s)
+              , maybeToList (stepIf s)
+              , maybeToList (stepUses s)
               , Map.elems (stepWith s)
               ]) (jobSteps j)
             runnerText = case jobRunsOn j of
@@ -231,8 +232,8 @@ extractMatrixNames = go []
 -- | Count conditional branches: job-level if + step-level if.
 countConditionals :: [Job] -> [Step] -> Int
 countConditionals jobs steps =
-  let jobIfs  = length (filter (\j -> jobIf j /= Nothing) jobs)
-      stepIfs = length (filter (\s -> stepIf s /= Nothing) steps)
+  let jobIfs  = length (filter (\j -> isJust (jobIf j)) jobs)
+      stepIfs = length (filter (\s -> isJust (stepIf s)) steps)
   in jobIfs + stepIfs
 
 -- | Count steps that reference reusable workflows (uses: owner/repo/.github/...).

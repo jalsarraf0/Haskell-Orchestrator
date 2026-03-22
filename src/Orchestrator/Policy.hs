@@ -33,6 +33,7 @@ module Orchestrator.Policy
   ) where
 
 import Data.Char (isDigit, isLower)
+import Data.Maybe (isNothing)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -58,7 +59,7 @@ data PolicyPack = PolicyPack
 
 -- | Evaluate a single policy rule against a workflow.
 evaluatePolicy :: PolicyRule -> Workflow -> [Finding]
-evaluatePolicy rule wf = ruleCheck rule wf
+evaluatePolicy = ruleCheck
 
 -- | Evaluate all rules in a pack against a workflow.
 evaluatePolicies :: PolicyPack -> Workflow -> [Finding]
@@ -110,16 +111,16 @@ checkCondition wf cond = case cond of
       Just (PermissionsMap m) -> any (\k -> T.toCaseFold txt `T.isInfixOf` T.toCaseFold k) (Map.keys m)
       _ -> False
   ActionNotPinned ->
-    any hasUnpinnedAction (concatMap jobSteps (wfJobs wf))
+    any (any hasUnpinnedAction . jobSteps) (wfJobs wf)
   JobMissingField field ->
     case T.toLower field of
-      "timeout-minutes" -> any (\j -> jobTimeoutMin j == Nothing) (wfJobs wf)
+      "timeout-minutes" -> any (\j -> isNothing (jobTimeoutMin j)) (wfJobs wf)
       _ -> False
   WorkflowNamePattern pat ->
     simplePatternMatch pat (wfName wf)
   StepUsesPattern pat ->
-    any (\s -> maybe False (simplePatternMatch pat) (stepUses s))
-        (concatMap jobSteps (wfJobs wf))
+    any (any (\s -> maybe False (simplePatternMatch pat) (stepUses s)) . jobSteps)
+        (wfJobs wf)
   TriggerContains evtName ->
     any (triggerHasEvent evtName) (wfTriggers wf)
   EnvKeyPresent key ->
@@ -139,7 +140,7 @@ hasUnpinnedAction step = case stepUses step of
         in T.length ref /= 40 || not (T.all isHexDigit ref)
     | otherwise -> True
   where
-    isHexDigit c = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+    isHexDigit c = isDigit c || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
 
 simplePatternMatch :: Text -> Text -> Bool
 simplePatternMatch pat txt

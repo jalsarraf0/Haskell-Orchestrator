@@ -1,6 +1,7 @@
 module Main (main) where
 
 import CLI (Command (..), Options (..), OutputMode (..), parseOptions)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
@@ -296,7 +297,7 @@ runUpgradePath _opts path = do
 runUI :: FilePath -> Maybe Int -> IO ()
 runUI path mPort = do
   let cfg = (defaultServerConfig path)
-              { scPort = maybe 8420 id mPort }
+              { scPort = fromMaybe 8420 mPort }
   startDashboard cfg
 
 -- | Apply baseline filtering if --baseline was provided.

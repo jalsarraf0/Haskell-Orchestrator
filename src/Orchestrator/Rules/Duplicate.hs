@@ -6,6 +6,7 @@ module Orchestrator.Rules.Duplicate
   ) where
 
 import Data.List (group, sort)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Orchestrator.Model
@@ -75,6 +76,6 @@ jobFingerprint j =
 -- | Fingerprint a single step.
 stepFingerprint :: Step -> Text
 stepFingerprint s =
-  let uses = maybe "" id (stepUses s)
+  let uses = fromMaybe "" (stepUses s)
       run = maybe "" (T.take 50) (stepRun s)  -- First 50 chars of run
   in uses <> "~" <> run

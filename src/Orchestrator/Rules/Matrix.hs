@@ -7,6 +7,7 @@ module Orchestrator.Rules.Matrix
   , matrixFailFastRule
   ) where
 
+import Data.Maybe (maybeToList)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Orchestrator.Model
@@ -85,10 +86,10 @@ hasMatrixRefs j =
 
 stepTexts :: Step -> [Text]
 stepTexts s = concat
-  [ maybe [] (:[]) (stepRun s)
-  , maybe [] (:[]) (stepName s)
-  , maybe [] (:[]) (stepIf s)
-  , maybe [] (:[]) (stepUses s)
+  [ maybeToList (stepRun s)
+  , maybeToList (stepName s)
+  , maybeToList (stepIf s)
+  , maybeToList (stepUses s)
   ]
 
 -- | Check for matrix explosion risk indicators.

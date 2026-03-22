@@ -8,6 +8,7 @@ module Orchestrator.Simulate.Matrix
   , estimateMatrixSize
   ) where
 
+import Data.Maybe (maybeToList)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -43,10 +44,10 @@ extractDimensions j =
 findMatrixRefs :: Step -> [Text]
 findMatrixRefs s =
   let texts = concat
-        [ maybe [] (:[]) (stepRun s)
-        , maybe [] (:[]) (stepUses s)
-        , maybe [] (:[]) (stepName s)
-        , maybe [] (:[]) (stepIf s)
+        [ maybeToList (stepRun s)
+        , maybeToList (stepUses s)
+        , maybeToList (stepName s)
+        , maybeToList (stepIf s)
         , Map.elems (stepWith s)
         , Map.elems (stepEnv s)
         ]

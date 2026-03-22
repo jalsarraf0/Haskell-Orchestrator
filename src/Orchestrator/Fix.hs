@@ -155,8 +155,8 @@ isJobLine l =
   in indent == 4 && T.isSuffixOf ":" stripped && not (T.isPrefixOf "#" stripped)
 
 hasTimeoutNearby :: Int -> [(Int, Text)] -> Bool
-hasTimeoutNearby n ls =
-  any (\(n', l') -> abs (n' - n) <= 8 && "timeout-minutes" `T.isInfixOf` l') ls
+hasTimeoutNearby n =
+  any (\(n', l') -> abs (n' - n) <= 8 && "timeout-minutes" `T.isInfixOf` l')
 
 hasPRTrigger :: Text -> Bool
 hasPRTrigger content = "pull_request" `T.isInfixOf` content

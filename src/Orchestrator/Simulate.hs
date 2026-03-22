@@ -48,7 +48,7 @@ simulateWorkflow ctx wf =
        }
 
 workflowTriggered :: SimContext -> [WorkflowTrigger] -> Bool
-workflowTriggered ctx triggers = any (triggerMatches ctx) triggers
+workflowTriggered ctx = any (triggerMatches ctx)
 
 triggerMatches :: SimContext -> WorkflowTrigger -> Bool
 triggerMatches ctx (TriggerEvents evts) =

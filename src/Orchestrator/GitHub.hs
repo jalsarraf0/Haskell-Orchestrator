@@ -25,6 +25,8 @@ import Data.Aeson (FromJSON (..), (.:), (.:?), (.!=), withObject, eitherDecode)
 import Data.ByteString qualified as BS
 import Data.ByteString.Char8 qualified as BSC
 import Data.ByteString.Lazy qualified as LBS
+import Data.Either (rights)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
@@ -124,7 +126,7 @@ doRequest mgr cfg path = do
           let retryAfter = lookup "Retry-After" (responseHeaders resp)
           in case retryAfter of
             Just secs -> pure $ Left $ GitHubRateLimited
-              (maybe 60 id (readMaybe (BSC.unpack secs)))
+              (fromMaybe 60 (readMaybe (BSC.unpack secs)))
             Nothing -> pure $ Left $ GitHubRateLimited 60
         404 -> pure $ Left $ GitHubNotFound path
         401 -> pure $ Left $ GitHubAuthError "Token is invalid or lacks required scopes"
@@ -148,7 +150,7 @@ fetchWorkflowFiles mgr cfg owner repo = do
       Left e -> pure $ Left $ GitHubParseError (T.pack e)
       Right entries -> do
         files <- mapM (fetchFileContent mgr cfg owner repo) entries
-        pure $ Right [ f | Right f <- files ]
+        pure $ Right (rights files)
 
 -- | A directory entry from the GitHub API.
 data DirEntry = DirEntry
@@ -276,7 +278,7 @@ scanRemoteRepo pack cfg owner repo = do
     Right files -> do
       let parsed = [ parseWorkflowBS (T.unpack (rwfName f)) (rwfContent f)
                    | f <- files ]
-          workflows = [ wf | Right wf <- parsed ]
+          workflows = rights parsed
           findings = concatMap (evaluatePolicies pack) workflows
       pure $ Right ScanResult
         { scanTarget = GitHubRepo owner repo
@@ -295,7 +297,7 @@ scanRemoteOrg pack cfg org = do
     Left err -> pure $ Left err
     Right repos -> do
       results <- mapM (scanOneRepo mgr pack cfg) repos
-      pure $ Right [ sr | Right sr <- results ]
+      pure $ Right (rights results)
 
 scanOneRepo :: Manager -> PolicyPack -> GitHubConfig -> RepoEntry
             -> IO (Either GitHubError ScanResult)
@@ -307,7 +309,7 @@ scanOneRepo mgr pack cfg entry = do
     Right files -> do
       let parsed = [ parseWorkflowBS (T.unpack (rwfName f)) (rwfContent f)
                    | f <- files ]
-          workflows = [ wf | Right wf <- parsed ]
+          workflows = rights parsed
           findings = concatMap (evaluatePolicies pack) workflows
       pure $ Right ScanResult
         { scanTarget = GitHubRepo owner repo

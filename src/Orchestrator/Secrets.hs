@@ -16,6 +16,7 @@ module Orchestrator.Secrets
   ) where
 
 import Data.List (nub, sort)
+import Data.Maybe (mapMaybe)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -90,7 +91,7 @@ buildSecretScopes refs =
         { ssSecretName = name
         , ssWorkflows  = nub $ sort $ map srReferencedIn' rs
         , ssJobs       = nub $ sort $ map srJob rs
-        , ssSteps      = nub $ sort $ concatMap (maybe [] (:[]) . srStep) rs
+        , ssSteps      = nub $ sort $ mapMaybe srStep rs
         }) grouped
   where
     srReferencedIn' r = T.pack (srReferencedIn r)
