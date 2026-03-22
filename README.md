@@ -8,7 +8,7 @@
 **Workflow standardization, drift detection, and remediation planning for
 GitHub Actions.**
 
-> **Governance Status** — Scanned by [Haskell Orchestrator Enterprise](https://github.com/jalsarraf0/Haskell-Orchestrator) v3.0.2 on 2026-03-22: **0 findings** across 21 governance rules.
+> **Governance Status** — Scanned by [Haskell Orchestrator Enterprise](https://github.com/jalsarraf0/Haskell-Orchestrator) v3.0.3 on 2026-03-22: **0 findings** across 21 governance rules.
 
 Stop treating CI/CD workflows as one-off configs that nobody reviews.
 Haskell Orchestrator discovers workflow sprawl, detects drift from your
@@ -392,14 +392,32 @@ They use distinct binary names and do not share runtime state:
 Each binary reads `.orchestrator.yml` independently. They do not interfere
 with each other.
 
+## Code Quality
+
+All source code compiles **warning-free** under GHC's strictest practical
+warning set. The `common warnings` stanza in `orchestrator.cabal` enables:
+
+```
+-Wall -Wcompat -Widentities -Wincomplete-record-updates
+-Wincomplete-uni-patterns -Wmissing-export-lists
+-Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+```
+
+These flags are shared across the library, executable, and test suite via
+`import: warnings`. All file I/O operations are wrapped with
+`Control.Exception.try` to handle errors gracefully rather than crashing.
+
 ## Development
 
 ```bash
-# Build
+# Build (all warnings are errors in CI)
 cabal build all
 
 # Test
 cabal test all --test-show-details=direct
+
+# Verify zero warnings (CI gate)
+cabal clean && cabal build all --ghc-options="-Werror"
 
 # Run demo
 cabal run orchestrator -- demo
@@ -415,7 +433,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full development guidelines.
 - **Unit tests** — Model, parser, policy, validation, diff, config, rendering
 - **Demo fixture tests** — Synthetic workflows produce expected findings
 - **Golden tests** — Output stability for key scenarios
-- **CI** — All tests run on every push and PR
+- **Property tests** — QuickCheck-driven invariant checking
+- **CI** — All tests run on every push and PR (115 tests)
 
 ## Release Flow
 
