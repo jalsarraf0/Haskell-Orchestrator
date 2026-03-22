@@ -15,10 +15,11 @@ concurrency:
 jobs:
   repo-guard:
     name: Repository Context Guard
-    runs-on: [self-hosted, unified-all]
+    runs-on: [self-hosted, Linux, unified-all]
     timeout-minutes: 2
     steps:
       - name: Verify repository ownership
+        shell: bash
         run: |
           echo "Repository: ${{ github.repository }}"
           if [ "${{ github.repository }}" != "jalsarraf0/Haskell-Orchestrator" ] && \
