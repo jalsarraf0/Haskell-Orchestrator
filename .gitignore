@@ -18,3 +18,5 @@ cabal.project.local~
 *.swp
 *~
 _bin/
+firebase-debug.log
+cabal.project.freeze
