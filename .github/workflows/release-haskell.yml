@@ -44,11 +44,6 @@ jobs:
             arch: x86_64
             ext: ''
             archive: tar.gz
-          - runner: [self-hosted, Windows, X64, windows, haskell, unified-all]
-            os-name: windows
-            arch: x86_64
-            ext: '.exe'
-            archive: zip
 
     steps:
       - name: Checkout
@@ -232,7 +227,6 @@ jobs:
             | Platform | Architecture | File |
             |----------|-------------|------|
             | Linux | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64.tar.gz` |
-            | Windows | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-windows-x86_64.zip` |
 
             ### Verification
 
