@@ -63,7 +63,7 @@ branchMatches branch filters = any (matchBranch branch) filters
   where
     matchBranch b pat
       | "**" `T.isInfixOf` pat = True
-      | "*" `T.isSuffixOf` pat = T.init pat `T.isPrefixOf` b
+      | "*" `T.isSuffixOf` pat = T.dropEnd 1 pat `T.isPrefixOf` b
       | otherwise = b == pat
 
 expandJob :: SimContext -> Job -> [SimulatedJob]

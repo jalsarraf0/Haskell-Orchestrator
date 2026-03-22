@@ -20,6 +20,7 @@ module Orchestrator.GitHub
 
 import Control.Exception (SomeException, try)
 import Data.Word (Word8)
+import Text.Read (readMaybe)
 import Data.Aeson (FromJSON (..), (.:), (.:?), (.!=), withObject, eitherDecode)
 import Data.ByteString qualified as BS
 import Data.ByteString.Char8 qualified as BSC
@@ -123,7 +124,7 @@ doRequest mgr cfg path = do
           let retryAfter = lookup "Retry-After" (responseHeaders resp)
           in case retryAfter of
             Just secs -> pure $ Left $ GitHubRateLimited
-              (maybe 60 (read . BSC.unpack) (Just secs))
+              (maybe 60 id (readMaybe (BSC.unpack secs)))
             Nothing -> pure $ Left $ GitHubRateLimited 60
         404 -> pure $ Left $ GitHubNotFound path
         401 -> pure $ Left $ GitHubAuthError "Token is invalid or lacks required scopes"

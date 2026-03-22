@@ -13,6 +13,7 @@ module Orchestrator.Config
   , validateConfig
   ) where
 
+import Control.Exception (SomeException, try)
 import Data.Aeson (FromJSON (..), (.:?), (.!=), withObject)
 import Data.ByteString qualified as BS
 import Data.Maybe (catMaybes)
@@ -177,12 +178,15 @@ defaultConfig = OrchestratorConfig
 -- | Load configuration from a YAML file.
 loadConfig :: FilePath -> IO (Either OrchestratorError OrchestratorConfig)
 loadConfig fp = do
-  bs <- BS.readFile fp
-  case Yaml.decodeEither' bs of
+  result <- try (BS.readFile fp) :: IO (Either SomeException BS.ByteString)
+  case result of
     Left err -> pure $ Left $ ConfigError $
-      "Failed to parse config " <> showT fp <> ": "
-      <> showT (Yaml.prettyPrintParseException err)
-    Right cfg -> pure $ validateConfig cfg
+      "Failed to read config " <> showT fp <> ": " <> showT err
+    Right bs -> case Yaml.decodeEither' bs of
+      Left err -> pure $ Left $ ConfigError $
+        "Failed to parse config " <> showT fp <> ": "
+        <> showT (Yaml.prettyPrintParseException err)
+      Right cfg -> pure $ validateConfig cfg
   where
     showT :: Show a => a -> Text
     showT = T.pack . show

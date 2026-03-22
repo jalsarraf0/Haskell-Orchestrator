@@ -11,6 +11,7 @@ module Orchestrator.Parser
 import Data.Aeson (Object, Value (..))
 import Data.Aeson.Key qualified as Key
 import Data.Aeson.KeyMap qualified as KM
+import Control.Exception (SomeException, try)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Map.Strict qualified as Map
@@ -24,8 +25,10 @@ import Orchestrator.Types (OrchestratorError (..))
 -- | Parse a workflow from a file path.
 parseWorkflowFile :: FilePath -> IO (Either OrchestratorError Workflow)
 parseWorkflowFile fp = do
-  bs <- BS.readFile fp
-  pure $ parseWorkflowBS fp bs
+  result <- try (BS.readFile fp) :: IO (Either SomeException BS.ByteString)
+  case result of
+    Left err -> pure $ Left $ ParseError fp (T.pack $ show err)
+    Right bs -> pure $ parseWorkflowBS fp bs
 
 -- | Parse a workflow from a ByteString with a filename for error context.
 parseWorkflowBS :: FilePath -> ByteString -> Either OrchestratorError Workflow

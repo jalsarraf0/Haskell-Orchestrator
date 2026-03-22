@@ -144,8 +144,8 @@ hasUnpinnedAction step = case stepUses step of
 simplePatternMatch :: Text -> Text -> Bool
 simplePatternMatch pat txt
   | T.null pat = T.null txt
-  | T.last pat == '*' = T.init pat `T.isPrefixOf` txt
-  | T.head pat == '*' = T.tail pat `T.isSuffixOf` txt
+  | T.isSuffixOf "*" pat = T.dropEnd 1 pat `T.isPrefixOf` txt
+  | T.isPrefixOf "*" pat = T.drop 1 pat `T.isSuffixOf` txt
   | otherwise = pat == txt
 
 triggerHasEvent :: Text -> WorkflowTrigger -> Bool
@@ -335,7 +335,7 @@ isPinned :: Text -> Bool
 isPinned t =
   case T.breakOn "@" t of
     (_, after) | not (T.null after) ->
-      let sha = T.tail after
+      let sha = T.drop 1 after
       in T.length sha == 40 && T.all (\c -> isDigit c || (c >= 'a' && c <= 'f')) sha
     _ -> False
 

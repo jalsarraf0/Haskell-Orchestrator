@@ -29,7 +29,7 @@ duplicateJobRule = PolicyRule
       let jobs = wfJobs wf
           fingerprints = map (\j -> (jobFingerprint j, jobId j)) jobs
           grouped = group $ sort $ map fst fingerprints
-          dups = [ fp | fps <- grouped, length fps > 1, let fp = head fps ]
+          dups = [ fp0 | (fp0:_:_) <- grouped ]
           dupJobs = [ (jid, fp)
                     | (fp, jid) <- fingerprints
                     , fp `elem` dups

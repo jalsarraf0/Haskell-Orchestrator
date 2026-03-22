@@ -27,7 +27,7 @@ import Network.Wai.Handler.Warp
 import Data.String (fromString)
 import System.Environment (lookupEnv)
 import System.IO (hPutStrLn, stderr)
-import System.Process (callCommand)
+import System.Process (proc, createProcess, CreateProcess(..), StdStream(..))
 import System.Info qualified as SI
 import Control.Exception (try, SomeException)
 import Text.Read (readMaybe)
@@ -97,16 +97,6 @@ applyEnvOverrides cfg = do
 -- | Compute rule count dynamically from the policy pack.
 dynamicRuleCount :: Int
 dynamicRuleCount = length (packRules extendedPolicyPack)
-
--- | Partition scan results into successes and failures, logging failures.
-partitionResults :: [Either String a] -> IO [a]
-partitionResults = go []
-  where
-    go acc [] = pure (reverse acc)
-    go acc (Right x : rest) = go (x : acc) rest
-    go acc (Left err : rest) = do
-      hPutStrLn stderr $ "Scan error: " ++ err
-      go acc rest
 
 -- | Start the dashboard server on configured interfaces.
 -- Spawns one warp instance per bind address.
@@ -243,7 +233,10 @@ openBrowser addr port = do
         "darwin"  -> "open"
         "mingw32" -> "start"
         _         -> "xdg-open"
-  result <- try (callCommand $ cmd ++ " " ++ url ++ " 2>/dev/null &") :: IO (Either SomeException ())
+      cp = (proc cmd [url])
+             { std_in = NoStream, std_out = NoStream, std_err = NoStream
+             , close_fds = True }
+  result <- try (createProcess cp >> pure ()) :: IO (Either SomeException ())
   case result of
     Left _ -> hPutStrLn stderr $ "Open " ++ url ++ " in your browser."
     Right _ -> pure ()

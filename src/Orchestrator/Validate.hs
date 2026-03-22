@@ -64,7 +64,7 @@ checkEmptyJobs wf
 checkDuplicateJobIds :: Workflow -> [Finding]
 checkDuplicateJobIds wf =
   let ids = map jobId (wfJobs wf)
-      dupes = [head g | g <- group (sort ids), length g > 1]
+      dupes = [g0 | (g0:_:_) <- group (sort ids)]
   in map (\d -> mkValFinding Error "VAL-002"
             ("Duplicate job ID: " <> d) (wfFileName wf)) dupes
 

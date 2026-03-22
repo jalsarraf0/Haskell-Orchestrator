@@ -6,7 +6,6 @@ module Orchestrator.Rules.Environment
   , envMissingUrlRule
   ) where
 
-import Data.Text (Text)
 import Data.Text qualified as T
 import Orchestrator.Model
 import Orchestrator.Policy (PolicyRule (..))

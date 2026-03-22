@@ -13,6 +13,7 @@ module Orchestrator.Baseline
   , baselinePath
   ) where
 
+import Control.Exception (SomeException, try)
 import Data.Aeson (FromJSON (..), ToJSON (..), object, (.=), (.:))
 import Data.Aeson qualified as Aeson
 import Data.ByteString.Lazy qualified as LBS
@@ -73,10 +74,12 @@ saveBaseline path findings = do
 -- | Load a previously saved baseline.
 loadBaseline :: FilePath -> IO (Either Text Baseline)
 loadBaseline path = do
-  bs <- LBS.readFile path
-  case Aeson.eitherDecode bs of
-    Left err -> pure $ Left $ "Failed to load baseline: " <> T.pack err
-    Right b  -> pure $ Right b
+  result <- try (LBS.readFile path) :: IO (Either SomeException LBS.ByteString)
+  case result of
+    Left err -> pure $ Left $ "Failed to read baseline file: " <> T.pack (show err)
+    Right bs -> case Aeson.eitherDecode bs of
+      Left err -> pure $ Left $ "Failed to load baseline: " <> T.pack err
+      Right b  -> pure $ Right b
 
 -- | Compare current findings against a baseline.
 -- Returns only findings that are NOT in the baseline (new findings).

@@ -15,7 +15,7 @@ module Orchestrator.Hook
   , runHookCheck
   ) where
 
-import Control.Exception (IOException, try)
+import Control.Exception (IOException, SomeException, try)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
@@ -74,12 +74,15 @@ uninstallHook repoRoot = do
   if not hookExists
     then pure $ Left "No pre-commit hook found"
     else do
-      contents <- TIO.readFile hookPath
-      if "# orchestrator-hook" `T.isInfixOf` contents
-        then do
-          removeFile hookPath
-          pure $ Right ()
-        else pure $ Left "Pre-commit hook was not installed by orchestrator"
+      readResult <- try $ TIO.readFile hookPath :: IO (Either SomeException Text)
+      case readResult of
+        Left _ -> pure $ Left "Pre-commit hook file disappeared before it could be read"
+        Right contents ->
+          if "# orchestrator-hook" `T.isInfixOf` contents
+            then do
+              removeFile hookPath
+              pure $ Right ()
+            else pure $ Left "Pre-commit hook was not installed by orchestrator"
 
 -- | The shell script content for the pre-commit hook.
 --

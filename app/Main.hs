@@ -11,7 +11,7 @@ import Orchestrator.Demo (runDemo)
 import Orchestrator.Diff (generatePlan, renderPlanText)
 import Orchestrator.Fix (FixConfig (..), analyzeFixable, applyFixes, defaultFixConfig)
 import Orchestrator.Policy
-    ( PolicyPack (..), PolicyRule (..), defaultPolicyPack )
+    ( PolicyPack (..), PolicyRule (..) )
 import Orchestrator.Policy.Extended (extendedPolicyPack)
 import Orchestrator.Render
     ( renderFindings, renderFindingsJSON, renderSummary )
@@ -25,7 +25,7 @@ import Orchestrator.Parser (parseWorkflowFile)
 import Orchestrator.Types
 import Orchestrator.Validate (ValidationResult (..), validateWorkflow)
 import System.Directory (doesDirectoryExist, doesFileExist)
-import System.Exit (ExitCode (..), exitWith, exitFailure, exitSuccess)
+import System.Exit (ExitCode (..), exitWith, exitFailure)
 import System.IO (hPutStrLn, stderr)
 
 main :: IO ()
@@ -268,7 +268,7 @@ runVerify _opts = do
   TIO.putStrLn "Verification complete."
 
 runBaseline :: Options -> FilePath -> IO ()
-runBaseline opts path = do
+runBaseline _opts path = do
   let pack = activePack
       scfg = cfgScan defaultConfig
   result <- scanLocalPath pack scfg path
@@ -285,7 +285,7 @@ runBaseline opts path = do
       TIO.putStrLn "Future scans with --baseline will only show new findings."
 
 runUpgradePath :: Options -> FilePath -> IO ()
-runUpgradePath opts path = do
+runUpgradePath _opts path = do
   let pack = activePack
       scfg = cfgScan defaultConfig
   result <- scanLocalPath pack scfg path

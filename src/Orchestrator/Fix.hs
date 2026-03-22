@@ -125,11 +125,10 @@ applyFixes cfg fp content actions =
 
 -- | Render a unified-diff-like preview of fixes.
 renderFixDiff :: [FixAction] -> Text -> Text
-renderFixDiff actions _content
-  | null actions = "No fixes needed for this file."
-  | otherwise = T.unlines $
-      [ "--- " <> T.pack (faFile (head actions)) <> " (original)"
-      , "+++ " <> T.pack (faFile (head actions)) <> " (fixed)"
+renderFixDiff [] _content = "No fixes needed for this file."
+renderFixDiff actions@(fa0:_) _content = T.unlines $
+      [ "--- " <> T.pack (faFile fa0) <> " (original)"
+      , "+++ " <> T.pack (faFile fa0) <> " (fixed)"
       , ""
       ] ++ concatMap renderAction actions
   where
