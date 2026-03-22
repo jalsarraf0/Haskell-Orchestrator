@@ -212,10 +212,10 @@ jobs:
       - name: Generate SBOM
         run: |
           VERSION="${{ steps.prep.outputs.version }}"
-          cabal update
-          cabal freeze
+          cabal update || true
+          cabal freeze || true
           python3 << 'PYEOF'
-          import json, re
+          import json, re, os
           sbom = {
             "bomFormat": "CycloneDX",
             "specVersion": "1.5",
@@ -229,15 +229,18 @@ jobs:
             },
             "components": []
           }
-          with open("cabal.project.freeze") as f:
-              for line in f:
-                  m = re.search(r"any\.(\S+)\s+==(\S+)", line)
-                  if m:
-                      sbom["components"].append({
-                          "type": "library",
-                          "name": m.group(1),
-                          "version": m.group(2)
-                      })
+          if os.path.exists("cabal.project.freeze"):
+              with open("cabal.project.freeze") as f:
+                  for line in f:
+                      m = re.search(r"any\.(\S+)\s+==(\S+)", line)
+                      if m:
+                          sbom["components"].append({
+                              "type": "library",
+                              "name": m.group(1),
+                              "version": m.group(2)
+                          })
+          else:
+              print("::warning::cabal.project.freeze not found — SBOM will have no dependency list")
           with open(f"release/sbom-{sbom['metadata']['component']['version']}.json", "w") as out:
               json.dump(sbom, out, indent=2)
           PYEOF
