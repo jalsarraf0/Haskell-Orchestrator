@@ -67,27 +67,23 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          # GHCup and cabal
           echo "C:\ghcup\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-          echo "C:\Users\jalsarraf\.ghcup\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-          echo "CABAL_DIR=C:\Users\jalsarraf\AppData\Roaming\cabal" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          echo "$env:USERPROFILE\.ghcup\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          # MSYS sh.exe required by packages with ./configure scripts (network, old-time)
+          echo "C:\Program Files\Git\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          $cabalDir = "$env:APPDATA\cabal"
+          echo "CABAL_DIR=$cabalDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          echo "CABAL_APPDATA=$cabalDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-      - name: Cache Cabal (Unix)
-        if: runner.os != 'Windows'
+      - name: Cache Cabal
         uses: actions/cache@v4
         with:
           path: |
             ~/.cabal/packages
             ~/.cabal/store
-            dist-newstyle
-          key: release-${{ matrix.os-name }}-${{ matrix.arch }}-${{ hashFiles('**/*.cabal', 'cabal.project') }}
-
-      - name: Cache Cabal (Windows)
-        if: runner.os == 'Windows'
-        uses: actions/cache@v4
-        with:
-          path: |
-            C:\Users\jalsarraf\AppData\Roaming\cabal\packages
-            C:\Users\jalsarraf\AppData\Roaming\cabal\store
+            ~/AppData/Roaming/cabal/packages
+            ~/AppData/Roaming/cabal/store
             dist-newstyle
           key: release-${{ matrix.os-name }}-${{ matrix.arch }}-${{ hashFiles('**/*.cabal', 'cabal.project') }}
 
@@ -96,7 +92,7 @@ jobs:
         shell: bash
         run: |
           cabal update
-          cabal build exe:orchestrator -O2
+          cabal build exe:orchestrator -O2 || { echo "Build failed, cleaning stale cache..."; cabal clean; cabal build exe:orchestrator -O2; }
           mkdir -p _bin
           cabal install exe:orchestrator -O2 --install-method=copy --overwrite-policy=always --installdir=_bin
 
