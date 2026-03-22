@@ -44,22 +44,50 @@ jobs:
             arch: x86_64
             ext: ''
             archive: tar.gz
+          - runner: [self-hosted, Windows, X64, haskell, unified-all]
+            os-name: windows
+            arch: x86_64
+            ext: '.exe'
+            archive: zip
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set CABAL_DIR
+      - name: Setup Haskell paths (Unix)
         if: runner.os != 'Windows'
         shell: bash
-        run: echo "CABAL_DIR=$HOME/.cabal" >> "$GITHUB_ENV"
+        run: |
+          echo "$HOME/.ghcup/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.cabal/bin" >> "$GITHUB_PATH"
+          echo "/opt/haskell/.ghcup/bin" >> "$GITHUB_PATH"
+          echo "CABAL_DIR=$HOME/.cabal" >> "$GITHUB_ENV"
 
-      - name: Cache Cabal
+      - name: Setup Haskell paths (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "C:\ghcup\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          echo "C:\Users\jalsarraf\.ghcup\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          echo "CABAL_DIR=C:\Users\jalsarraf\AppData\Roaming\cabal" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Cache Cabal (Unix)
+        if: runner.os != 'Windows'
         uses: actions/cache@v4
         with:
           path: |
             ~/.cabal/packages
             ~/.cabal/store
+            dist-newstyle
+          key: release-${{ matrix.os-name }}-${{ matrix.arch }}-${{ hashFiles('**/*.cabal', 'cabal.project') }}
+
+      - name: Cache Cabal (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Users\jalsarraf\AppData\Roaming\cabal\packages
+            C:\Users\jalsarraf\AppData\Roaming\cabal\store
             dist-newstyle
           key: release-${{ matrix.os-name }}-${{ matrix.arch }}-${{ hashFiles('**/*.cabal', 'cabal.project') }}
 
@@ -227,6 +255,7 @@ jobs:
             | Platform | Architecture | File |
             |----------|-------------|------|
             | Linux | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64.tar.gz` |
+            | Windows | x86_64 | `haskell-orchestrator-${{ steps.prep.outputs.version }}-windows-x86_64.zip` |
 
             ### Verification
 
