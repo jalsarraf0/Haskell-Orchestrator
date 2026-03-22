@@ -92,8 +92,9 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
+          rm -rf dist-newstyle
           cabal update
-          cabal build exe:orchestrator -O2 || { echo "Build failed, cleaning stale cache..."; cabal clean; cabal build exe:orchestrator -O2; }
+          cabal build exe:orchestrator -O2
           mkdir -p _bin
           cabal install exe:orchestrator -O2 --install-method=copy --overwrite-policy=always --installdir=_bin
 
