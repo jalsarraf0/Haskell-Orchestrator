@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 -- | Policy engine for evaluating workflows against configurable rules.
 --
 -- Provides a set of built-in rules for common GitHub Actions best practices
@@ -86,8 +87,7 @@ customRuleToPolicy crc = PolicyRule
   , ruleSeverity    = parseSeverity (crcSeverity crc)
   , ruleCategory    = parseCategory (crcCategory crc)
   , ruleCheck       = \wf ->
-      if all (checkCondition wf) (crcConditions crc)
-        then [Finding
+      [Finding
           { findingSeverity    = parseSeverity (crcSeverity crc)
           , findingCategory    = parseCategory (crcCategory crc)
           , findingRuleId      = crcId crc
@@ -98,8 +98,9 @@ customRuleToPolicy crc = PolicyRule
           , findingAutoFixable = False
           , findingEffort      = Nothing
           , findingLinks       = []
-          }]
-        else []
+          }
+        | all (checkCondition wf) (crcConditions crc)
+        ]
   }
 
 -- | Evaluate a single condition against a workflow.
@@ -114,18 +115,18 @@ checkCondition wf cond = case cond of
     any (any hasUnpinnedAction . jobSteps) (wfJobs wf)
   JobMissingField field ->
     case T.toLower field of
-      "timeout-minutes" -> any (\j -> isNothing (jobTimeoutMin j)) (wfJobs wf)
+      "timeout-minutes" -> any (isNothing . jobTimeoutMin) (wfJobs wf)
       _ -> False
   WorkflowNamePattern pat ->
     simplePatternMatch pat (wfName wf)
   StepUsesPattern pat ->
-    any (any (\s -> maybe False (simplePatternMatch pat) (stepUses s)) . jobSteps)
+    any (any (maybe False (simplePatternMatch pat) . stepUses) . jobSteps)
         (wfJobs wf)
   TriggerContains evtName ->
     any (triggerHasEvent evtName) (wfTriggers wf)
   EnvKeyPresent key ->
     Map.member key (wfEnv wf) ||
-    any (\j -> Map.member key (jobEnv j)) (wfJobs wf)
+    any (Map.member key . jobEnv) (wfJobs wf)
   RunnerMatches txt ->
     any (\j -> txt `T.isInfixOf` showRunner (jobRunsOn j)) (wfJobs wf)
 
@@ -292,14 +293,13 @@ missingConcurrencyRule = PolicyRule
   , ruleCategory = Concurrency
   , ruleCheck = \wf ->
       let hasPR = any isPRTrigger (wfTriggers wf)
-      in if hasPR && null (wfConcurrency wf)
-         then [ mkFinding Info Concurrency "CONC-001"
+      in [ mkFinding Info Concurrency "CONC-001"
                   "Workflow has pull_request trigger but no concurrency config. \
                   \Duplicate runs may waste resources."
                   (wfFileName wf)
                   (Just "Add 'concurrency:' with cancel-in-progress for PR workflows.")
+              | hasPR && null (wfConcurrency wf)
               ]
-         else []
   }
 
 isPRTrigger :: WorkflowTrigger -> Bool
@@ -314,8 +314,7 @@ unpinnedActionRule = PolicyRule
   , ruleSeverity = Warning
   , ruleCategory = Security
   , ruleCheck = \wf ->
-      concatMap (\j ->
-        concatMap (\s -> case stepUses s of
+      concatMap (concatMap (\s -> case stepUses s of
           Just uses
             | not (isFirstParty uses) && not (isPinned uses) ->
               [ mkFinding Warning Security "SEC-001"
@@ -325,8 +324,7 @@ unpinnedActionRule = PolicyRule
                   (Just "Pin to a full commit SHA instead of a tag.")
               ]
           _ -> []
-        ) (jobSteps j)
-      ) (wfJobs wf)
+        ) . jobSteps) (wfJobs wf)
   }
 
 isFirstParty :: Text -> Bool
@@ -372,13 +370,12 @@ workflowNamingRule = PolicyRule
   , ruleSeverity = Info
   , ruleCategory = Naming
   , ruleCheck = \wf ->
-      if T.length (wfName wf) < 3
-      then [ mkFinding Info Naming "NAME-001"
+      [ mkFinding Info Naming "NAME-001"
                "Workflow has a very short or missing name."
                (wfFileName wf)
                (Just "Use a descriptive workflow name (e.g., 'CI', 'Release').")
+           | T.length (wfName wf) < 3
            ]
-      else []
   }
 
 jobNamingRule :: PolicyRule
@@ -390,13 +387,12 @@ jobNamingRule = PolicyRule
   , ruleCategory = Naming
   , ruleCheck = \wf ->
       concatMap (\j ->
-        if not (isKebabCase (jobId j))
-        then [ mkFinding Info Naming "NAME-002"
+        [ mkFinding Info Naming "NAME-002"
                  ("Job ID '" <> jobId j <> "' does not follow kebab-case.")
                  (wfFileName wf)
                  (Just "Use kebab-case for job IDs (e.g., 'build-and-test').")
+             | not (isKebabCase (jobId j))
              ]
-        else []
       ) (wfJobs wf)
   }
 
@@ -411,15 +407,14 @@ triggerWildcardRule = PolicyRule
   , ruleSeverity = Info
   , ruleCategory = Triggers
   , ruleCheck = \wf ->
-      concatMap (\t -> case t of
+      concatMap (\case
         TriggerEvents evts -> concatMap (\e ->
-          if any ("**" `T.isInfixOf`) (triggerBranches e)
-          then [ mkFinding Info Triggers "TRIG-001"
+          [ mkFinding Info Triggers "TRIG-001"
                    ("Trigger '" <> triggerName e <> "' uses wildcard branch pattern.")
                    (wfFileName wf)
                    (Just "Restrict to specific branches for tighter control.")
+               | any ("**" `T.isInfixOf`) (triggerBranches e)
                ]
-          else []
           ) evts
         _ -> []
       ) (wfTriggers wf)
@@ -433,8 +428,7 @@ secretInRunRule = PolicyRule
   , ruleSeverity = Error
   , ruleCategory = Security
   , ruleCheck = \wf ->
-      concatMap (\j ->
-        concatMap (\s -> case stepRun s of
+      concatMap (concatMap (\s -> case stepRun s of
           Just cmd
             | "secrets." `T.isInfixOf` cmd ->
               [ mkFinding Error Security "SEC-002"
@@ -444,6 +438,5 @@ secretInRunRule = PolicyRule
                   (Just "Pass secrets via environment variables instead.")
               ]
           _ -> []
-        ) (jobSteps j)
-      ) (wfJobs wf)
+        ) . jobSteps) (wfJobs wf)
   }

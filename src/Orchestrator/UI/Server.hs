@@ -13,6 +13,7 @@ module Orchestrator.UI.Server
   ) where
 
 import Control.Concurrent (forkIO)
+import Control.Monad (void)
 import Control.Concurrent.MVar (MVar, newMVar, readMVar, modifyMVar_)
 import Data.ByteString.Lazy qualified as LBS
 import Data.Text (Text)
@@ -236,7 +237,7 @@ openBrowser addr port = do
       cp = (proc cmd [url])
              { std_in = NoStream, std_out = NoStream, std_err = NoStream
              , close_fds = True }
-  result <- try (createProcess cp >> pure ()) :: IO (Either SomeException ())
+  result <- try (void (createProcess cp)) :: IO (Either SomeException ())
   case result of
     Left _ -> hPutStrLn stderr $ "Open " ++ url ++ " in your browser."
     Right _ -> pure ()

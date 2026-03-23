@@ -50,8 +50,7 @@ matrixFailFastRule = PolicyRule
             hasFF = case jobFailFast j of
               Just _  -> True
               Nothing -> False
-        in if isMatrix && not hasFF
-           then [ Finding
+        in [ Finding
                     { findingSeverity = Info
                     , findingCategory = Structure
                     , findingRuleId = "MAT-002"
@@ -67,8 +66,8 @@ matrixFailFastRule = PolicyRule
                     , findingEffort = Nothing
                     , findingLinks = []
                     }
+                | isMatrix && not hasFF
                 ]
-           else []
       ) (wfJobs wf)
   }
 
@@ -99,8 +98,7 @@ checkMatrixExplosion wf j
   | jobMatrixIncludeOnly j = []
   | otherwise =
   let refs = countMatrixDimensions j
-  in if refs >= 3
-     then [ Finding
+  in [ Finding
               { findingSeverity = Warning
               , findingCategory = Structure
               , findingRuleId = "MAT-001"
@@ -117,8 +115,8 @@ checkMatrixExplosion wf j
               , findingEffort = Nothing
               , findingLinks = []
               }
+          | refs >= 3
           ]
-     else []
 
 -- | Count distinct matrix dimension references in a job.
 countMatrixDimensions :: Job -> Int

@@ -24,8 +24,7 @@ envApprovalGateRule = PolicyRule
   , ruleCheck = \wf ->
       let isDeployLike = isDeploymentWorkflow wf
           hasEnvRef = any jobReferencesEnvironment (wfJobs wf)
-      in if isDeployLike && not hasEnvRef
-         then [ Finding
+      in [ Finding
                   { findingSeverity = Warning
                   , findingCategory = Security
                   , findingRuleId = "ENV-001"
@@ -43,8 +42,8 @@ envApprovalGateRule = PolicyRule
                   , findingEffort = Nothing
                   , findingLinks = []
                   }
+              | isDeployLike && not hasEnvRef
               ]
-         else []
   }
 
 -- | Rule: detect environment references without URL declarations.
@@ -61,8 +60,7 @@ envMissingUrlRule = PolicyRule
       concatMap (\j ->
         let refsEnv = jobReferencesEnvironment j
             hasUrl = jobEnvironmentUrl j || any stepSetsEnvironmentUrl (jobSteps j)
-        in if refsEnv && not hasUrl
-           then [ Finding
+        in [ Finding
                     { findingSeverity = Info
                     , findingCategory = Structure
                     , findingRuleId = "ENV-002"
@@ -79,8 +77,8 @@ envMissingUrlRule = PolicyRule
                     , findingEffort = Nothing
                     , findingLinks = []
                     }
+                | refsEnv && not hasUrl
                 ]
-           else []
       ) (wfJobs wf)
   }
 

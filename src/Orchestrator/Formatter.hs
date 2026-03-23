@@ -159,7 +159,7 @@ detectIndentWidth spaces =
   let len = T.length spaces
   in if len == 0 then 0
      else if len `mod` 4 == 0 then 4
-     else if len `mod` 2 == 0 then 2
+     else if even len then 2
      else len  -- odd indentation, preserve as-is
 
 ------------------------------------------------------------------------

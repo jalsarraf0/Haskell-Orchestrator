@@ -26,8 +26,7 @@ compositeDescriptionRule = PolicyRule
       let hasCall = any isWorkflowCall (wfTriggers wf)
           hasShortName = T.length (wfName wf) < 5
           hasGenericName = wfName wf `elem` ["CI", "Build", "Test", "Run", "Main"]
-      in if hasCall && (hasShortName || hasGenericName)
-         then [ Finding
+      in [ Finding
                   { findingSeverity = Info
                   , findingCategory = Naming
                   , findingRuleId = "COMP-001"
@@ -43,8 +42,8 @@ compositeDescriptionRule = PolicyRule
                   , findingEffort = Nothing
                   , findingLinks = []
                   }
+              | hasCall && (hasShortName || hasGenericName)
               ]
-         else []
   }
 
 -- | Rule: detect steps in composite-like workflows missing explicit shell.

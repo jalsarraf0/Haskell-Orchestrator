@@ -35,9 +35,7 @@ duplicateJobRule = PolicyRule
                     | (fp, jid) <- fingerprints
                     , fp `elem` dups
                     ]
-      in if null dupJobs
-         then []
-         else [ Finding
+      in [ Finding
                   { findingSeverity = Info
                   , findingCategory = Duplication
                   , findingRuleId = "DUP-001"
@@ -55,6 +53,7 @@ duplicateJobRule = PolicyRule
                   , findingEffort = Nothing
                   , findingLinks = []
                   }
+              | not (null dupJobs)
               ]
   }
 

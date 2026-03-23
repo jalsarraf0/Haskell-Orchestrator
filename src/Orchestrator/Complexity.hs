@@ -115,8 +115,7 @@ complexityRule = PolicyRule
   , ruleCategory    = Structure
   , ruleCheck       = \wf ->
       let cs = computeComplexity wf
-      in if csScore cs >= 7
-         then [ Finding
+      in [ Finding
                   { findingSeverity    = Warning
                   , findingCategory    = Structure
                   , findingRuleId      = "CMPLX-001"
@@ -133,8 +132,8 @@ complexityRule = PolicyRule
                   , findingEffort      = Nothing
                   , findingLinks       = []
                   }
+              | csScore cs >= 7
               ]
-         else []
   }
 
 -- | Render a complexity score as human-readable text.
@@ -232,8 +231,8 @@ extractMatrixNames = go []
 -- | Count conditional branches: job-level if + step-level if.
 countConditionals :: [Job] -> [Step] -> Int
 countConditionals jobs steps =
-  let jobIfs  = length (filter (\j -> isJust (jobIf j)) jobs)
-      stepIfs = length (filter (\s -> isJust (stepIf s)) steps)
+  let jobIfs  = length (filter (isJust . jobIf) jobs)
+      stepIfs = length (filter (isJust . stepIf) steps)
   in jobIfs + stepIfs
 
 -- | Count steps that reference reusable workflows (uses: owner/repo/.github/...).

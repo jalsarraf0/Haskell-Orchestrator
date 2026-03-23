@@ -127,7 +127,7 @@ resolveDependencies jobs =
 estimateJobDuration :: Job -> Int
 estimateJobDuration j =
   let stepCount = length (jobSteps j)
-      hasDocker = any (\s -> maybe False ("docker://" `T.isPrefixOf`) (stepUses s)) (jobSteps j)
+      hasDocker = any (maybe False ("docker://" `T.isPrefixOf`) . stepUses) (jobSteps j)
       baseMins = case jobTimeoutMin j of
         Just t  -> min t (stepCount * 2 + 1)
         Nothing -> stepCount * 2 + 1
@@ -177,7 +177,7 @@ renderSimulation sim = T.unlines $
     showT = T.pack . show
     renderJob j =
       [ statusIcon (sjStatus j) <> " " <> sjJobId j
-          <> maybe "" (\n -> " — " <> n) (sjName j)
+          <> maybe "" (" — " <>) (sjName j)
       , "    Runner: " <> sjRunner j
       , "    Status: " <> renderStatus (sjStatus j)
       ] ++ if isRunning (sjStatus j)

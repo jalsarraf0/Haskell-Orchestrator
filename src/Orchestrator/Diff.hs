@@ -30,7 +30,7 @@ toStep :: Int -> Finding -> RemediationStep
 toStep n f = RemediationStep
   { remStepOrder = n
   , remStepDescription = findingRuleId f <> ": " <> findingMessage f
-      <> maybe "" (\r -> "\n  Fix: " <> r) (findingRemediation f)
+      <> maybe "" ("\n  Fix: " <>) (findingRemediation f)
   , remStepFile = findingFile f
   , remStepDiff = Nothing
   }

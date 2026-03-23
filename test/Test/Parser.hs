@@ -1,6 +1,7 @@
 module Test.Parser (tests) where
 
 import Data.ByteString.Char8 qualified as BS
+import Data.Maybe (isJust)
 import Orchestrator.Model
 import Orchestrator.Parser
 import Orchestrator.Types (OrchestratorError (..))
@@ -40,7 +41,7 @@ tests = testGroup "Parser"
       case parseWorkflowBS "test.yml" yaml of
         Left err -> error $ "Parse failed: " ++ show err
         Right wf -> do
-          assertBool "Should have permissions" (wfPermissions wf /= Nothing)
+          assertBool "Should have permissions" (isJust (wfPermissions wf))
 
   , testCase "Parse workflow with concurrency" $ do
       let yaml = BS.pack $ unlines
@@ -58,7 +59,7 @@ tests = testGroup "Parser"
       case parseWorkflowBS "test.yml" yaml of
         Left err -> error $ "Parse failed: " ++ show err
         Right wf -> do
-          assertBool "Should have concurrency" (wfConcurrency wf /= Nothing)
+          assertBool "Should have concurrency" (isJust (wfConcurrency wf))
 
   , testCase "Reject invalid YAML" $ do
       let yaml = BS.pack "{{invalid yaml"

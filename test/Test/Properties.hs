@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Test.Properties (tests) where
 
+import Data.Maybe (isNothing)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import Orchestrator.Model
@@ -45,7 +46,7 @@ instance Arbitrary Step where
     sid <- oneof [pure Nothing, Just <$> arbId]
     sname <- oneof [pure Nothing, Just <$> arbName]
     suses <- oneof [pure Nothing, Just <$> arbAction]
-    srun <- if suses == Nothing then Just <$> arbCommand else pure Nothing
+    srun <- if isNothing suses then Just <$> arbCommand else pure Nothing
     sif <- oneof [pure Nothing, Just <$> elements ["github.event_name == 'push'", "always()"]]
     sshell <- oneof [pure Nothing, Just <$> elements ["bash", "pwsh", "sh"]]
     pure $ Step sid sname suses srun Map.empty Map.empty sif sshell
@@ -76,8 +77,7 @@ instance Arbitrary Job where
     env <- oneof [pure Nothing, Just <$> elements ["production", "staging", "development"]]
     envUrl <- arbitrary
     ff <- oneof [pure Nothing, Just <$> arbitrary]
-    inclOnly <- arbitrary
-    pure $ Job jid jname runner steps perms needs conc Map.empty jif timeout env envUrl ff inclOnly
+    Job jid jname runner steps perms needs conc Map.empty jif timeout env envUrl ff <$> arbitrary
     where
       arbJobId = elements ["build", "test", "deploy", "lint", "check", "publish", "release"]
       arbName = elements ["Build", "Test", "Deploy", "Lint", "Check", "Publish"]
@@ -168,7 +168,7 @@ tests = testGroup "Properties"
 
   , testProperty "Policy evaluation finding count is non-negative" $
       \(wf :: Workflow) ->
-        length (evaluatePolicies defaultPolicyPack wf) >= 0
+        evaluatePolicies defaultPolicyPack wf `seq` True
 
   , testProperty "Validation result is deterministic" $
       \(wf :: Workflow) ->

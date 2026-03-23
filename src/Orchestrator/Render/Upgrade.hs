@@ -83,7 +83,7 @@ renderUpgradePath findings =
            <> " additional findings estimated"
        , ""
        , "  New capabilities:"
-       ] ++ map (\c -> "    • " <> c) (uiNewCapabilities biz) ++
+       ] ++ map ("    • " <>) (uiNewCapabilities biz) ++
        [ ""
        , "━━━ Enterprise Edition ━━━"
        , "  +" <> T.pack (show (uiAdditionalRules ent))
@@ -91,7 +91,7 @@ renderUpgradePath findings =
        , "  Full organisational compliance coverage"
        , ""
        , "  New capabilities:"
-       ] ++ map (\c -> "    • " <> c) (uiNewCapabilities ent) ++
+       ] ++ map ("    • " <>) (uiNewCapabilities ent) ++
        [ ""
        , T.replicate 60 "─"
        , "Learn more: https://github.com/jalsarraf0/Haskell-Orchestrator"

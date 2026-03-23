@@ -30,8 +30,7 @@ reuseInputValidationRule = PolicyRule
           -- input declarations.
           allSteps = concatMap jobSteps (wfJobs wf)
           usesExpressions = any stepUsesExpression allSteps
-      in if hasWorkflowCall && not usesExpressions
-         then [ Finding
+      in [ Finding
                   { findingSeverity = Warning
                   , findingCategory = Structure
                   , findingRuleId = "REUSE-001"
@@ -48,8 +47,8 @@ reuseInputValidationRule = PolicyRule
                   , findingEffort = Nothing
                   , findingLinks = []
                   }
+              | hasWorkflowCall && not usesExpressions
               ]
-         else []
   }
 
 -- | Rule: detect reusable workflows whose outputs are never referenced.
@@ -65,8 +64,7 @@ reuseUnusedOutputRule = PolicyRule
           -- Check if any step sets outputs via GITHUB_OUTPUT
           allSteps = concatMap jobSteps (wfJobs wf)
           setsOutput = any stepSetsOutput allSteps
-      in if hasWorkflowCall && not setsOutput
-         then [ Finding
+      in [ Finding
                   { findingSeverity = Info
                   , findingCategory = Structure
                   , findingRuleId = "REUSE-002"
@@ -83,8 +81,8 @@ reuseUnusedOutputRule = PolicyRule
                   , findingEffort = Nothing
                   , findingLinks = []
                   }
+              | hasWorkflowCall && not setsOutput
               ]
-         else []
   }
 
 ------------------------------------------------------------------------

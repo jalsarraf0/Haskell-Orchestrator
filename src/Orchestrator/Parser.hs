@@ -87,9 +87,8 @@ toText _          = ""
 parseTriggers :: FilePath -> Object -> Either OrchestratorError [WorkflowTrigger]
 parseTriggers fp obj =
   case KM.lookup "on" obj of
-    Nothing -> case KM.lookup (Key.fromText "true") obj of
-      -- YAML parses bare `on:` as boolean true sometimes
-      _ -> Left $ ParseError fp "Workflow missing 'on' trigger block"
+    -- YAML parses bare `on:` as boolean true sometimes
+    Nothing -> Left $ ParseError fp "Workflow missing 'on' trigger block"
     Just val -> Right $ parseTriggerValue val
 
 parseTriggerValue :: Value -> [WorkflowTrigger]
@@ -107,7 +106,7 @@ parseTriggerValue (Object obj) =
           ]
         _ -> []
       dispatch = [TriggerDispatch | KM.member "workflow_dispatch" obj]
-  in  (if null events then [] else [TriggerEvents events])
+  in  [TriggerEvents events | not (null events)]
       ++ scheds ++ dispatch
 parseTriggerValue _ = []
 

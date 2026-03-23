@@ -59,8 +59,7 @@ secretScopeRule = PolicyRule
       let refs   = analyzeSecrets wf
           scopes = buildSecretScopes refs
       in concatMap (\ss ->
-           if length (ssJobs ss) > 3
-           then [ Finding
+           [ Finding
                     { findingSeverity    = Warning
                     , findingCategory    = Security
                     , findingRuleId      = "SEC-003"
@@ -77,8 +76,8 @@ secretScopeRule = PolicyRule
                     , findingEffort      = Nothing
                     , findingLinks       = []
                     }
+                | length (ssJobs ss) > 3
                 ]
-           else []
          ) scopes
   }
 
@@ -125,17 +124,17 @@ analyzeStep fp jid s =
         Just cmd -> map (\n -> SecretRef n fp jid label "run") (extractSecretNames cmd)
         Nothing  -> []
       envRefs   = analyzeEnvMap fp jid label (stepEnv s)
-      withRefs  = concatMap (\val ->
-        map (\n -> SecretRef n fp jid label "with") (extractSecretNames val)
-        ) (Map.elems (stepWith s))
+      withRefs  = concatMap
+        (map (\n -> SecretRef n fp jid label "with") . extractSecretNames)
+        (Map.elems (stepWith s))
   in runRefs ++ envRefs ++ withRefs
 
 -- | Analyze an environment variable map for secret references.
 analyzeEnvMap :: FilePath -> Text -> Maybe Text -> EnvMap -> [SecretRef]
 analyzeEnvMap fp jid label env =
-  concatMap (\val ->
-    map (\n -> SecretRef n fp jid label "env") (extractSecretNames val)
-  ) (Map.elems env)
+  concatMap
+    (map (\n -> SecretRef n fp jid label "env") . extractSecretNames)
+    (Map.elems env)
 
 -- | Extract secret names from text containing secrets.NAME patterns.
 extractSecretNames :: Text -> [Text]

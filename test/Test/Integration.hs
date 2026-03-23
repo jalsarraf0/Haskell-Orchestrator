@@ -1,6 +1,7 @@
 module Test.Integration (tests) where
 
 import Data.ByteString.Char8 qualified as BS
+import Data.Either (rights)
 import Data.Text qualified as T
 import Orchestrator.Model
 import Orchestrator.Parser
@@ -76,7 +77,7 @@ realWorldPatterns = testGroup "Realistic Workflow Patterns"
         Right wf -> do
           let findings = evaluatePolicies defaultPolicyPack wf
           -- Write permissions may trigger PERM-002 depending on rules
-          assertBool "Should parse and evaluate" (length findings >= 0)
+          assertBool "Should parse and evaluate" (findings `seq` True)
 
   , testCase "Insecure workflow with multiple issues" $ do
       let yaml = BS.pack $ unlines
@@ -245,7 +246,7 @@ endToEndFlows = testGroup "End-to-End Flows"
           let findings = evaluatePolicies defaultPolicyPack wf
           assertBool "Should have multiple findings" (length findings >= 3)
           let plan = generatePlan (LocalPath ".") findings
-          assertBool "Plan should have steps" (length (planSteps plan) >= 1)
+          assertBool "Plan should have steps" (not (null (planSteps plan)))
           let txt = renderPlanText plan
           assertBool "Plan text should be non-empty" (not $ T.null txt)
 
@@ -255,7 +256,7 @@ endToEndFlows = testGroup "End-to-End Flows"
             , ("deploy.yml", BS.pack "name: Deploy\non: push\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo deploy")
             ]
           parsed = [ parseWorkflowBS name content | (name, content) <- yamls ]
-          workflows = [ wf | Right wf <- parsed ]
+          workflows = rights parsed
       assertBool "Both should parse" (length workflows == 2)
       let results = validateWorkflows workflows
       assertBool "Both should validate" (length results == 2)

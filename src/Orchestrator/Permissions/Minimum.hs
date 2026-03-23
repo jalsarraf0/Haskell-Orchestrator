@@ -153,9 +153,7 @@ permissionsMinimumRule = PolicyRule
   , ruleCategory    = Permissions
   , ruleCheck       = \wf ->
       let pa = analyzePermissions wf
-      in if Map.null (excessPerms pa)
-         then []
-         else [ Finding
+      in [ Finding
                   { findingSeverity    = Warning
                   , findingCategory    = Permissions
                   , findingRuleId      = "PERM-003"
@@ -171,5 +169,6 @@ permissionsMinimumRule = PolicyRule
                   , findingEffort      = Nothing
                   , findingLinks       = []
                   }
+              | not (Map.null (excessPerms pa))
               ]
   }

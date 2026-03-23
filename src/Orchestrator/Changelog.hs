@@ -13,6 +13,7 @@ module Orchestrator.Changelog
   ) where
 
 import Data.List (nub, sort, (\\))
+import Data.Maybe (fromMaybe)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -177,9 +178,7 @@ stepLabel s = case stepId s of
   Just sid -> sid
   Nothing  -> case stepName s of
     Just nm -> nm
-    Nothing -> case stepUses s of
-      Just u  -> u
-      Nothing -> "(unnamed)"
+    Nothing -> fromMaybe "(unnamed)" (stepUses s)
 
 -- | Show a runner spec as text.
 showRunner :: RunnerSpec -> Text
