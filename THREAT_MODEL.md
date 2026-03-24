@@ -81,8 +81,7 @@ executed.  The parser produces a typed domain model, not executable code.
 **Threat:** A compromised dependency or build artifact is distributed.
 
 **Mitigation:** Dependencies are pinned. Release artifacts include checksums
-and build provenance attestation. SBOM is provided for dependency inspection.
-No obfuscation is used.
+and SBOM for dependency inspection. No obfuscation is used.
 
 ### T5: Denial of Service via Large Scan
 
@@ -98,7 +97,7 @@ by the number of concurrent workflow files being parsed.
 - Unintended filesystem access (path validation, no auto-discovery)
 - Credential leakage (env-var based, not logged)
 - Resource exhaustion (bounded parallelism, configurable limits)
-- Supply chain compromise (checksums, SBOM, attestation)
+- Supply chain compromise (checksums, SBOM)
 
 ## What Is NOT Mitigated
 

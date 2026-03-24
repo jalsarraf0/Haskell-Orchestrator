@@ -8,7 +8,7 @@
 **Workflow standardization, drift detection, and remediation planning for
 GitHub Actions.**
 
-> **Governance Status** — Scanned by [Haskell Orchestrator Enterprise](https://github.com/Al-Sarraf-Tech/Haskell-Orchestrator) v3.0.3 on 2026-03-22: **0 findings** across 21 governance rules.
+> **Governance Status** — Scanned by [Haskell Orchestrator Enterprise](https://github.com/Al-Sarraf-Tech/Haskell-Orchestrator) v3.0.4 on 2026-03-22: **0 findings** across 21 governance rules.
 
 Stop treating CI/CD workflows as one-off configs that nobody reviews.
 Haskell Orchestrator discovers workflow sprawl, detects drift from your
@@ -53,6 +53,7 @@ This is the **Community Edition** — free and open source.
 |---------|:---------:|:--------:|:----------:|
 | Single-repo scanning | Yes | Yes | Yes |
 | 10 standard policy rules | Yes | Yes | Yes |
+| 11 extended policy rules | Yes | Yes | Yes |
 | Structural validation | Yes | Yes | Yes |
 | Diff / remediation plans | Yes | Yes | Yes |
 | JSON + text output | Yes | Yes | Yes |
@@ -101,8 +102,8 @@ sudo cp orchestrator /usr/local/bin/
 orchestrator demo
 ```
 
-Each release includes SHA-256 checksums, a CycloneDX SBOM, and build
-provenance attestation. See "Release Integrity / Verification" below.
+Each release includes SHA-256 checksums and a CycloneDX SBOM.
+See "Release Integrity / Verification" below.
 
 ### Install from Source
 
@@ -131,7 +132,7 @@ The Community binary includes:
 
 - GitHub Actions YAML parsing into typed domain model
 - Single-repository workflow scanning
-- 10 standard policy rules (permissions, security, runners, naming, triggers)
+- 21 built-in policy rules: 10 standard (permissions, security, runners, naming, triggers, concurrency) + 11 extended (graph cycle/orphan detection, duplicate job IDs, reusable workflow validation, matrix explosion/fail-fast, environment gate/URL checks, composite action shell/description)
 - Structural validation (empty jobs, dangling needs, duplicate IDs)
 - Diff view and remediation plan generation
 - Demo mode with synthetic fixtures (no external access)
@@ -324,7 +325,7 @@ resources:
 
 ## Policy Rules
 
-### Standard Pack
+### Standard Pack (10 rules)
 
 | ID | Name | Severity | Category | Description |
 |----|------|----------|----------|-------------|
@@ -338,6 +339,24 @@ resources:
 | NAME-001 | Workflow Naming | Info | Naming | Names should be descriptive |
 | NAME-002 | Job Naming | Info | Naming | Job IDs should be kebab-case |
 | TRIG-001 | Wildcard Triggers | Info | Triggers | Avoid wildcard branch patterns |
+
+### Extended Pack (11 additional rules)
+
+| ID | Name | Severity | Category | Description |
+|----|------|----------|----------|-------------|
+| GRAPH-001 | Workflow Cycle | Error | Graph | Detect cyclic job dependencies |
+| GRAPH-002 | Orphan Job | Warning | Graph | Jobs with no path to a terminal node |
+| DUP-001 | Duplicate Job ID | Error | Structural | Job IDs must be unique within a workflow |
+| REUSE-001 | Reusable Input Validation | Warning | Reuse | Reusable workflows should validate required inputs |
+| REUSE-002 | Unused Reusable Output | Info | Reuse | Declared outputs should be consumed |
+| MAT-001 | Matrix Explosion | Warning | Matrix | Matrix combinations above safe threshold |
+| MAT-002 | Matrix Fail-Fast Disabled | Info | Matrix | Explicit fail-fast: false should be intentional |
+| ENV-001 | Missing Environment URL | Info | Environments | Deployment environments should declare a URL |
+| ENV-002 | Unprotected Approval Gate | Warning | Environments | Production environments should require a review |
+| COMP-001 | Composite Action Description | Info | Composite | Composite action steps should have descriptions |
+| COMP-002 | Composite Shell Declaration | Warning | Composite | Run steps in composite actions should declare shell |
+
+Use `orchestrator rules` to list all rules and `orchestrator explain RULE_ID` for detail.
 
 ## Scan Safety Model
 
@@ -399,17 +418,13 @@ Haskell Orchestrator is designed to be safe and predictable:
 Each release includes:
 - **SHA-256 checksums** — Verify with `sha256sum -c SHA256SUMS-*.txt`
 - **SBOM** — CycloneDX JSON listing all dependencies
-- **Build provenance** — GitHub artifact attestation
 
 ```bash
 # Verify checksum
-sha256sum -c SHA256SUMS-3.0.3.txt
-
-# Verify provenance
-gh attestation verify haskell-orchestrator-3.0.3-linux-x86_64.tar.gz --owner Al-Sarraf-Tech
+sha256sum -c SHA256SUMS-3.0.4.txt
 
 # Inspect SBOM
-python3 -m json.tool sbom-3.0.3.json
+python3 -m json.tool sbom-3.0.4.json
 ```
 
 ## Performance / Resource Model

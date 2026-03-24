@@ -22,7 +22,6 @@ that supports each claim.
 |----------|-----------|----------|
 | Checksums | SHA-256 per artifact | Generated in release workflow |
 | SBOM | CycloneDX JSON | Generated from cabal freeze file |
-| Provenance | GitHub artifact attestation | `actions/attest-build-provenance` |
 | Signing | Not currently implemented | See "Future Work" |
 
 ### Build Reproducibility
@@ -65,13 +64,6 @@ sha256sum -c SHA256SUMS-X.Y.Z.txt
 ```bash
 curl -LO https://github.com/jalsarraf0/Haskell-Orchestrator/releases/download/vX.Y.Z/sbom-X.Y.Z.json
 python3 -m json.tool sbom-X.Y.Z.json
-```
-
-### Verify Build Provenance
-
-```bash
-gh attestation verify orchestrator-X.Y.Z-linux-x86_64 \
-  --owner jalsarraf0
 ```
 
 ## Standalone Installability

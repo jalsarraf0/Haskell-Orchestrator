@@ -36,7 +36,6 @@ report it responsibly:
 
 - Release binaries include SHA-256 checksums.
 - SBOM (Software Bill of Materials) is generated for each release.
-- Build provenance attestation is provided via GitHub's artifact attestation.
 - No obfuscation or packing is applied to binaries.
 - Dependencies are pinned via `cabal.project` index-state.
 

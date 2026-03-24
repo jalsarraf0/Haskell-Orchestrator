@@ -32,4 +32,3 @@ Each release includes:
 - `orchestrator-X.Y.Z-linux-x86_64` — compiled binary
 - `SHA256SUMS-X.Y.Z.txt` — checksums
 - `sbom-X.Y.Z.json` — CycloneDX SBOM
-- Build provenance attestation (GitHub-native)

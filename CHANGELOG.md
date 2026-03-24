@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.4] - 2026-03-24
+
+### Removed
+- Build provenance attestation references (requires public repo or GitHub Enterprise Cloud; not available on Al-Sarraf-Tech org)
+- `id-token: write` permission from release workflow (no longer needed)
+
+### Changed
+- Release verification documentation updated to reflect checksums + SBOM as the integrity story
+
 ## [1.2.1] - 2026-03-16
 
 ### Changed
@@ -61,7 +70,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-platform release artifacts (Linux, macOS, Windows; x86_64 and arm64)
 - SHA-256 checksums for all release artifacts
 - CycloneDX SBOM generation
-- Build provenance attestation via GitHub artifact attestations
 - Comprehensive test suite (45 tests)
 - 8 documentation guides (quickstart, FAQ, safety model, operator guide, etc.)
 - Edition comparison matrix with formal capability IDs

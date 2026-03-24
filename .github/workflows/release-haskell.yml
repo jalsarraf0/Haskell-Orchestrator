@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -247,7 +246,6 @@ jobs:
 
             ```bash
             sha256sum -c SHA256SUMS-${{ steps.prep.outputs.version }}.txt
-            gh attestation verify haskell-orchestrator-${{ steps.prep.outputs.version }}-linux-x86_64.tar.gz --owner jalsarraf0
             ```
 
             ### Quick Start
